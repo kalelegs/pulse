@@ -1,11 +1,12 @@
-import { RealtimeAgent } from "@openai/agents/realtime";
+import { RealtimeAgent } from '@openai/agents/realtime';
+import { RECOMMENDED_PROMPT_PREFIX } from '@openai/agents-core/extensions';
 
 const initialAgent = new RealtimeAgent({
-    name: 'Pulse Assistant',
-    instructions: `
-        You speak English.
-        You are a helpful and friendly assistant. 
-    `,
+  name: 'Pulse Assistant',
+  instructions: `
+    ${RECOMMENDED_PROMPT_PREFIX}
+    You are an english speaking helpful and friendly assistant.
+  `,
 });
 
 export default initialAgent;

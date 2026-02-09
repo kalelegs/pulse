@@ -1,5 +1,9 @@
 "use server";
 
+/**
+ * This is a server action that returns a short lived token for opening a direct WebRTC Connection to OpenAI
+ * @returns string (the actual token itself)
+ */
 export const getEphemeralToken = async (): Promise<string> => {
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
