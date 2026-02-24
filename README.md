@@ -8,6 +8,9 @@ Pulse is a realtime assistant reference implementation built with Next.js, OpenA
 - Agents are capable of rendering UI dynamically using [json-render](https://github.com/vercel-labs/json-render)
   - Enable agents to render rich UI components natively
 - Realtime events panel for debugging
+- Dynamic instruction building with user name.
+- User Context
+- Tool calling
 
 ## Setup
 

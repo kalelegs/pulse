@@ -9,14 +9,23 @@ import { useSession } from '@/hooks/useSession';
 
 const RealTimeExperience = () => {
   const audioRef = useRef<HTMLAudioElement>(null);
-  const { isLoading, isConnected, toggleConnect } = useSession({
+  const { isLoading, isConnected, toggleConnect, sendMessage } = useSession({
     audioRef,
+    context: {
+      userName: 'Gaurav',
+    },
+
+    /** Event Handlers */
+    onConnect: () => {
+      sendMessage('Please greet the user by name and introduce yourself briefly.');
+    },
   });
 
   const showcaseSpec = useMemo(() => createShowcaseSpec(), []);
 
   return (
     <main className="flex w-full flex-col gap-8 px-4 pt-4 lg:gap-12 lg:px-12">
+      {/* Pre create audio component for fast first response */}
       <audio ref={audioRef} autoPlay />
 
       <section className="rounded-md border px-8 py-4">

@@ -1,37 +1,41 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { TSessionContext, TUseSessionOptions, TUseSessionRetval } from './types';
 import { getEphemeralToken } from '@/actions/getEphemeralToken';
-import { RealtimeSession, OpenAIRealtimeWebRTC } from '@openai/agents/realtime';
 import initialAgent from '@/agents/initial';
-import { TUseSessionOptions, TUseSessionRetval } from './types';
+import { OpenAIRealtimeWebRTC, RealtimeSession, TransportEvent } from '@openai/agents/realtime';
 
 const createSession = async (
-  audioElement?: HTMLAudioElement | null,
-): Promise<RealtimeSession<unknown>> => {
+  options: TUseSessionOptions,
+): Promise<RealtimeSession<TSessionContext>> => {
+  const audioElement = options.audioRef?.current;
   const apiKey = await getEphemeralToken();
 
-  const session = new RealtimeSession(initialAgent, {
+  const session = new RealtimeSession<TSessionContext>(initialAgent, {
     model: 'gpt-realtime',
     transport: new OpenAIRealtimeWebRTC(audioElement ? { audioElement } : undefined),
+    context: options.context,
   });
 
+  // events ref: https://openai.github.io/openai-agents-js/openai/agents-realtime/type-aliases/realtimesessioneventtypes/#transport_event
+  session.on('transport_event', (te: TransportEvent) => {
+    console.debug('transport event', te);
+    // call upstream
+    options.onTransportEvent?.(te);
+  });
   await session.connect({ apiKey });
   return session;
 };
 
-const useSession = (options?: TUseSessionOptions): TUseSessionRetval => {
-  const [session, setSession] = useState<RealtimeSession>();
+const useSession = (options: TUseSessionOptions): TUseSessionRetval => {
+  // used for reactive nature
+  const [session, setSession] = useState<RealtimeSession<TSessionContext>>();
   const [isLoading, setIsLoading] = useState(false);
-  const sessionRef = useRef<RealtimeSession>(undefined);
-  const audioRef = options?.audioRef;
-
-  const sendMessage = useCallback((message: string) => {
-    if (!sessionRef.current || !message.trim()) {
-      return;
-    }
-    sessionRef.current.sendMessage(message);
-  }, []);
+  // the actual session object
+  const sessionRef = useRef<RealtimeSession<TSessionContext>>(undefined);
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
 
   const disconnect = useCallback(() => {
     sessionRef.current?.close();
@@ -46,13 +50,14 @@ const useSession = (options?: TUseSessionOptions): TUseSessionRetval => {
 
     setIsLoading(true);
     try {
-      const nextSession = await createSession(audioRef?.current);
+      const nextSession = await createSession(optionsRef.current);
       sessionRef.current = nextSession;
       setSession(nextSession);
+      optionsRef.current.onConnect?.();
     } finally {
       setIsLoading(false);
     }
-  }, [audioRef]);
+  }, []);
 
   const toggle = useCallback(async () => {
     if (session !== undefined) {
@@ -62,6 +67,13 @@ const useSession = (options?: TUseSessionOptions): TUseSessionRetval => {
 
     await connect();
   }, [session, connect, disconnect]);
+
+  const sendMessage = useCallback((message: string) => {
+    if (!sessionRef.current || !message.trim()) {
+      return;
+    }
+    sessionRef.current.sendMessage(message);
+  }, []);
 
   useEffect(() => {
     return () => {
