@@ -1,48 +1,20 @@
-Pulse is a realtime assistant reference implementation built with Next.js, OpenAI Agents SDK, and modular JSON rendering.
+Pulse is a real-time assistant reference architecture built with Next.js, the OpenAI Agents SDK, and modular JSON rendering. It is designed for customer-facing agentic experiences where low latency and strong functional capabilities are critical. The project demonstrates a robust, scalable multi-agent system that is voice-enabled, real-time, and tool-capable, providing a practical foundation for production-grade assistants.
 
 ## Features
 
-- Low latency WebRTC connection to OpenAI for realtime agent execution
-- Works with voice and text modalities (voice first)
-- Modular and declarative realtime agents defined in [./agents](/agents/)
-- Agents are capable of rendering UI dynamically using [json-render](https://github.com/vercel-labs/json-render)
-  - Enable agents to render rich UI components natively
-- Realtime events panel for debugging
-- Dynamic instruction building with user name.
-- User Context
-- Tool calling
+- [Feature details](./docs/features.md)
 
 ## Setup
 
-0. Install bun
-
-````bash
-curl -fsSL https://bun.sh/install | bash
-```
-
-1. Install dependencies
-
-```bash
-bun install
-````
-
-2. Configure environment variables in `.env`
-
-```bash
-OPENAI_API_KEY=your_openai_api_key
-# todo: add remaining
-```
-
-3. Start the app
-
-```bash
-bun run dev
-```
-
-4. Open [http://localhost:3000](http://localhost:3000)
+- [Setup guide](./docs/setup.md)
 
 ## References
 
-- OpenAI Realtime voice agents guide: https://openai.github.io/openai-agents-js/guides/voice-agents/build/
-- JSON Render: https://github.com/vercel-labs/json-render
-- shadcn/ui components: https://ui.shadcn.com/docs/components
+- [OpenAI Realtime voice agents guide](https://openai.github.io/openai-agents-js/guides/voice-agents/build/)
+- [JSON Render](https://github.com/vercel-labs/json-render)
+- [shadcn/ui components](https://ui.shadcn.com/docs/components)
+- [zustand](https://github.com/pmndrs/zustand)
+
+## AI Usage Notes
+
+While Codex, and Cursor were heavily used for productivity gains, this repo is not at all an AI slop. It is carefully architected and meticulously reviewed by me.

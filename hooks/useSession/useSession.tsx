@@ -1,7 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { TSessionContext, TUseSessionOptions, TUseSessionRetval } from './types';
+import {
+  TRealtimeUserInput,
+  TSessionContext,
+  TUseSessionOptions,
+  TUseSessionRetval,
+} from '@/types';
 import { getEphemeralToken } from '@/actions/getEphemeralToken';
 import initialAgent from '@/agents/initial';
 import { OpenAIRealtimeWebRTC, RealtimeSession, TransportEvent } from '@openai/agents/realtime';
@@ -28,7 +33,7 @@ const createSession = async (
   return session;
 };
 
-const useSession = (options: TUseSessionOptions): TUseSessionRetval => {
+export const useSession = (options: TUseSessionOptions): TUseSessionRetval => {
   // used for reactive nature
   const [session, setSession] = useState<RealtimeSession<TSessionContext>>();
   const [isLoading, setIsLoading] = useState(false);
@@ -68,8 +73,12 @@ const useSession = (options: TUseSessionOptions): TUseSessionRetval => {
     await connect();
   }, [session, connect, disconnect]);
 
-  const sendMessage = useCallback((message: string) => {
-    if (!sessionRef.current || !message.trim()) {
+  const sendMessage = useCallback((message: TRealtimeUserInput) => {
+    if (!sessionRef.current) {
+      return;
+    }
+    if (typeof message === 'string' && !message.trim()) {
+      // empty message
       return;
     }
     sessionRef.current.sendMessage(message);
@@ -92,5 +101,3 @@ const useSession = (options: TUseSessionOptions): TUseSessionRetval => {
     toggleConnect: toggle,
   };
 };
-
-export default useSession;

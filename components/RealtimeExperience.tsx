@@ -1,34 +1,36 @@
 'use client';
 
 import ConnectButton from '@/components/ConnectButton';
-import { JSONUIProvider, Renderer } from '@json-render/react';
-import { useMemo, useRef } from 'react';
-import { jsonRenderRegistry } from '@/lib/jsonRender';
-import { createShowcaseSpec } from '@/lib/spec-builders/showcase';
-import { useSession } from '@/hooks/useSession';
+import AgentLogs from '@/components/AgentLogs/AgentLogs';
+import { useRef } from 'react';
+import { useSession, useCustomerContext, useChatStore } from '@/hooks';
+
+import { processEvent } from '@/lib/EventProcessor';
 
 const RealTimeExperience = () => {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const context = useCustomerContext();
+  const addEvent = useChatStore((state) => state.addEvent);
+  const addMessage = useChatStore((state) => state.addMessage);
   const { isLoading, isConnected, toggleConnect, sendMessage } = useSession({
     audioRef,
-    context: {
-      userName: 'Gaurav',
-    },
+    context,
 
     /** Event Handlers */
     onConnect: () => {
       sendMessage('Please greet the user by name and introduce yourself briefly.');
     },
+    onTransportEvent: (te) => {
+      processEvent(te, addMessage, addEvent);
+    },
   });
 
-  const showcaseSpec = useMemo(() => createShowcaseSpec(), []);
-
   return (
-    <main className="flex w-full flex-col gap-8 px-4 pt-4 lg:gap-12 lg:px-12">
+    <main className="flex h-screen w-full flex-col gap-4 overflow-hidden px-4 py-4 lg:px-8">
       {/* Pre create audio component for fast first response */}
       <audio ref={audioRef} autoPlay />
 
-      <section className="rounded-md border px-8 py-4">
+      <section className="shrink-0 rounded-md border px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="my-2 text-lg font-bold">Pulse: JSON Rendering Playground</h1>
@@ -44,18 +46,11 @@ const RealTimeExperience = () => {
         </div>
       </section>
 
-      <div className="flex flex-col gap-6 lg:flex-row">
-        <section className="rounded-md border px-6 py-4 lg:flex-10">
-          <JSONUIProvider registry={jsonRenderRegistry}>
-            <Renderer registry={jsonRenderRegistry} spec={showcaseSpec} />
-          </JSONUIProvider>
+      <div className="flex min-h-0 flex-1 flex-col gap-4 lg:flex-row">
+        <section className="min-h-0 overflow-auto rounded-md border px-6 py-4 lg:flex-10">
+          Chat UI will come here
         </section>
-        <section className="rounded-md border px-6 py-4 lg:flex-4">
-          <h3 className="text-sm font-semibold">Realtime Events</h3>
-          <pre className="bg-muted mt-2 max-h-96 overflow-auto rounded-md p-3 text-xs">
-            Events will come here
-          </pre>
-        </section>
+        <AgentLogs />
       </div>
     </main>
   );

@@ -1,9 +1,9 @@
 import { RealtimeAgent } from '@openai/agents/realtime';
 import { RECOMMENDED_PROMPT_PREFIX } from '@openai/agents-core/extensions';
-import { TSessionContext } from '@/hooks/useSession/types';
 import { EVoice } from '@/lib/utils';
 import { RunContext } from '@openai/agents';
 import getWeather from '@/tools/weather';
+import { TSessionContext } from '@/types';
 
 
 /**

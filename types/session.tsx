@@ -1,12 +1,32 @@
 import { RealtimeSession, TransportEvent } from '@openai/agents/realtime';
 import { RefObject } from 'react';
 
+/** Redefined from @openai/agents/realtime/clientMessage as it is not exported from index */
+export type TRealtimeUserInput =
+  | string
+  | {
+      type: 'message';
+      role: 'user';
+      content: (
+        | {
+            type: 'input_text';
+            text: string;
+          }
+        | {
+            type: 'input_image';
+            image: string;
+            providerData?: Record<string, unknown>;
+          }
+      )[];
+    };
+
 /**
  * This type defines the context shape for session
  */
 export type TSessionContext = {
   /** User's Name */
   userName: string;
+  preferences: string[];
 };
 
 export type TUseSessionOptions = {
