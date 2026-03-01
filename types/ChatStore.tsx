@@ -1,4 +1,4 @@
-import { TRenderedEvent } from '@/components/AgentLogs/renderers/types';
+import { TRenderedEvent } from '@/components/Events/renderers/types';
 
 export type TDuration = {
   /**
@@ -39,10 +39,15 @@ export type TMessage = {
 
 export type TAddEventFn = (ev: TRenderedEvent) => void;
 export type TAddMessageFn = (message: TMessage) => void;
+export type TEventsLogLevel = 'verbose' | 'info';
 export type TChatStore = {
   messages: TMessage[];
   addMessage: TAddMessageFn;
   events: TRenderedEvent[];
   addEvent: TAddEventFn;
   clearEvents: () => void;
+  renderToolCalls: boolean;
+  setRenderToolCalls: (value: boolean) => void;
+  eventsLogLevel: TEventsLogLevel;
+  setEventsLogLevel: (value: TEventsLogLevel) => void;
 };

@@ -14,7 +14,7 @@ type TLogCardProps = {
   onCopy: () => void;
 };
 
-const LogCard = ({ copied, expanded, onToggleExpand, onCopy, incomingEvent }: TLogCardProps) => {
+const EventCard = ({ copied, expanded, onToggleExpand, onCopy, incomingEvent }: TLogCardProps) => {
   const onCardKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
@@ -124,4 +124,4 @@ const LogCard = ({ copied, expanded, onToggleExpand, onCopy, incomingEvent }: TL
   );
 };
 
-export default LogCard;
+export default EventCard;

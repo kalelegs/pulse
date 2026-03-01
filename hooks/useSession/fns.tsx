@@ -1,7 +1,7 @@
 import { getEphemeralToken } from '@/actions/getEphemeralToken';
 import initialAgent from '@/agents/initial';
 import { OpenAIRealtimeWebRTC, RealtimeSession, TransportEvent } from '@openai/agents/realtime';
-import { TSessionContext, TUseSessionOptions } from './types';
+import { TSessionContext, TUseSessionOptions } from '@/types';
 
 const createSession = async (
   options: TUseSessionOptions,

@@ -1,10 +1,12 @@
 import { create } from 'zustand';
 import { TChatStore } from '@/types/ChatStore';
-import { TRenderedEvent } from '@/components/AgentLogs/renderers/types';
+import { TRenderedEvent } from '@/components/Events/renderers/types';
 
 export const useChatStore = create<TChatStore>((set) => ({
   messages: [],
   events: [],
+  renderToolCalls: true,
+  eventsLogLevel: 'verbose',
   addMessage: (message) =>
     set((state) => ({
       messages: [...state.messages, message],
@@ -13,5 +15,13 @@ export const useChatStore = create<TChatStore>((set) => ({
   clearEvents: () =>
     set(() => ({
       events: [],
+    })),
+  setRenderToolCalls: (value: boolean) =>
+    set(() => ({
+      renderToolCalls: value,
+    })),
+  setEventsLogLevel: (value) =>
+    set(() => ({
+      eventsLogLevel: value,
     })),
 }));

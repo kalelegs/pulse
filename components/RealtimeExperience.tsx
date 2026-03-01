@@ -1,9 +1,10 @@
 'use client';
 
+import EventList from '@/components/Events/EventList';
 import ConnectButton from '@/components/ConnectButton';
-import AgentLogs from '@/components/AgentLogs/AgentLogs';
 import { useRef } from 'react';
 import { useSession, useCustomerContext, useChatStore } from '@/hooks';
+import SettingsPanel from '@/components/SettingsPanel';
 
 import { processEvent } from '@/lib/EventProcessor';
 
@@ -12,6 +13,7 @@ const RealTimeExperience = () => {
   const context = useCustomerContext();
   const addEvent = useChatStore((state) => state.addEvent);
   const addMessage = useChatStore((state) => state.addMessage);
+  const eventsLogLevel = useChatStore((state) => state.eventsLogLevel);
   const { isLoading, isConnected, toggleConnect, sendMessage } = useSession({
     audioRef,
     context,
@@ -21,7 +23,7 @@ const RealTimeExperience = () => {
       sendMessage('Please greet the user by name and introduce yourself briefly.');
     },
     onTransportEvent: (te) => {
-      processEvent(te, addMessage, addEvent);
+      processEvent(te, addMessage, addEvent, eventsLogLevel);
     },
   });
 
@@ -36,7 +38,8 @@ const RealTimeExperience = () => {
             <h1 className="my-2 text-lg font-bold">Pulse: JSON Rendering Playground</h1>
             <h2>Modular generic components rendered from JSON specs.</h2>
           </div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            <SettingsPanel />
             <ConnectButton
               isLoading={isLoading}
               isConnected={isConnected}
@@ -50,7 +53,7 @@ const RealTimeExperience = () => {
         <section className="min-h-0 overflow-auto rounded-md border px-6 py-4 lg:flex-10">
           Chat UI will come here
         </section>
-        <AgentLogs />
+        <EventList />
       </div>
     </main>
   );

@@ -6,15 +6,15 @@ import {
   renderInputAudioSpeechStopped,
   renderOutputAudioBufferStarted,
   renderOutputAudioBufferStopped,
-} from '@/components/AgentLogs/renderers/audio';
+} from '@/components/Events/renderers/audio';
 import {
   renderConversationItemAdded,
   renderConversationItemDone,
   renderConversationItemRetrieved,
   renderInputAudioTranscriptionCompleted,
   renderInputAudioTranscriptionDelta,
-} from '@/components/AgentLogs/renderers/conversation';
-import { renderRateLimitsUpdated } from '@/components/AgentLogs/renderers/rateLimits';
+} from '@/components/Events/renderers/conversation';
+import { renderRateLimitsUpdated } from '@/components/Events/renderers/rateLimits';
 import {
   renderResponseContentPartAdded,
   renderResponseContentPartDone,
@@ -27,11 +27,8 @@ import {
   renderResponseOutputAudioTranscriptDone,
   renderResponseOutputItemAdded,
   renderResponseOutputItemDone,
-} from '@/components/AgentLogs/renderers/response';
-import {
-  renderSessionCreated,
-  renderSessionUpdated,
-} from '@/components/AgentLogs/renderers/session';
+} from '@/components/Events/renderers/response';
+import { renderSessionCreated, renderSessionUpdated } from '@/components/Events/renderers/session';
 import {
   TConversationInputAudioTranscriptionCompletedEvent,
   TConversationInputAudioTranscriptionDeltaEvent,
@@ -59,7 +56,7 @@ import {
   TSessionUpdatedEvent,
   TTransportEventType,
 } from '@/types';
-import { TAddEventFn, TAddMessageFn } from '@/types/ChatStore';
+import { TAddEventFn, TAddMessageFn, TEventsLogLevel } from '@/types/ChatStore';
 import { TransportEvent } from '@openai/agents/realtime';
 
 /**
@@ -74,152 +71,209 @@ export const processEvent = (
   te: TransportEvent,
   addMessageFn: TAddMessageFn,
   addEventFn: TAddEventFn,
+  eventsLogLevel: TEventsLogLevel,
 ) => {
   const type = te.type as TTransportEventType;
+  const isAlwaysLoggedEvent =
+    type === 'response.output_item.added' ||
+    type === 'response.output_item.done' ||
+    type === 'response.function_call_arguments.done' ||
+    type === 'conversation.item.added' ||
+    type === 'conversation.item.done' ||
+    type === 'output_audio_buffer.started' ||
+    type === 'output_audio_buffer.stopped';
 
   switch (type) {
     case 'conversation.item.added': {
       const event = te as TConversationItemAddedEvent;
       const renderedEvent = renderConversationItemAdded(event);
-      addEventFn(renderedEvent);
+      if (isAlwaysLoggedEvent || eventsLogLevel === 'verbose') {
+        addEventFn(renderedEvent);
+      }
       break;
     }
     case 'conversation.item.done': {
       const event = te as TConversationItemDoneEvent;
       const renderedEvent = renderConversationItemDone(event);
-      addEventFn(renderedEvent);
+      if (isAlwaysLoggedEvent || eventsLogLevel === 'verbose') {
+        addEventFn(renderedEvent);
+      }
       break;
     }
     case 'conversation.item.input_audio_transcription.completed': {
       const event = te as TConversationInputAudioTranscriptionCompletedEvent;
       const renderedEvent = renderInputAudioTranscriptionCompleted(event);
-      addEventFn(renderedEvent);
+      if (isAlwaysLoggedEvent || eventsLogLevel === 'verbose') {
+        addEventFn(renderedEvent);
+      }
       break;
     }
     case 'conversation.item.input_audio_transcription.delta': {
       const event = te as TConversationInputAudioTranscriptionDeltaEvent;
       const renderedEvent = renderInputAudioTranscriptionDelta(event);
-      addEventFn(renderedEvent);
+      if (isAlwaysLoggedEvent || eventsLogLevel === 'verbose') {
+        addEventFn(renderedEvent);
+      }
       break;
     }
     case 'conversation.item.retrieved': {
       const event = te as TConversationItemRetrievedEvent;
       const renderedEvent = renderConversationItemRetrieved(event);
-      addEventFn(renderedEvent);
+      if (isAlwaysLoggedEvent || eventsLogLevel === 'verbose') {
+        addEventFn(renderedEvent);
+      }
       break;
     }
     case 'input_audio_buffer.committed': {
       const event = te as TInputAudioBufferCommittedEvent;
       const renderedEvent = renderInputAudioBufferCommitted(event);
-      addEventFn(renderedEvent);
+      if (isAlwaysLoggedEvent || eventsLogLevel === 'verbose') {
+        addEventFn(renderedEvent);
+      }
       break;
     }
     case 'input_audio_buffer.speech_started': {
       const event = te as TInputAudioBufferSpeechStartedEvent;
       const renderedEvent = renderInputAudioSpeechStarted(event);
-      addEventFn(renderedEvent);
+      if (isAlwaysLoggedEvent || eventsLogLevel === 'verbose') {
+        addEventFn(renderedEvent);
+      }
       break;
     }
     case 'input_audio_buffer.speech_stopped': {
       const event = te as TInputAudioBufferSpeechStoppedEvent;
       const renderedEvent = renderInputAudioSpeechStopped(event);
-      addEventFn(renderedEvent);
+      if (isAlwaysLoggedEvent || eventsLogLevel === 'verbose') {
+        addEventFn(renderedEvent);
+      }
       break;
     }
     case 'output_audio_buffer.started': {
       const event = te as TOutputAudioBufferStartedEvent;
       const renderedEvent = renderOutputAudioBufferStarted(event);
-      addEventFn(renderedEvent);
+      if (isAlwaysLoggedEvent || eventsLogLevel === 'verbose') {
+        addEventFn(renderedEvent);
+      }
       break;
     }
     case 'output_audio_buffer.stopped': {
       const event = te as TOutputAudioBufferStoppedEvent;
       const renderedEvent = renderOutputAudioBufferStopped(event);
-      addEventFn(renderedEvent);
+      if (isAlwaysLoggedEvent || eventsLogLevel === 'verbose') {
+        addEventFn(renderedEvent);
+      }
       break;
     }
     case 'rate_limits.updated': {
       const event = te as TRateLimitsUpdatedEvent;
       const renderedEvent = renderRateLimitsUpdated(event);
-      addEventFn(renderedEvent);
+      if (isAlwaysLoggedEvent || eventsLogLevel === 'verbose') {
+        addEventFn(renderedEvent);
+      }
       break;
     }
     case 'response.content_part.added': {
       const event = te as TResponseContentPartAddedEvent;
       const renderedEvent = renderResponseContentPartAdded(event);
-      addEventFn(renderedEvent);
+      if (isAlwaysLoggedEvent || eventsLogLevel === 'verbose') {
+        addEventFn(renderedEvent);
+      }
       break;
     }
     case 'response.content_part.done': {
       const event = te as TResponseContentPartDoneEvent;
       const renderedEvent = renderResponseContentPartDone(event);
-      addEventFn(renderedEvent);
+      if (isAlwaysLoggedEvent || eventsLogLevel === 'verbose') {
+        addEventFn(renderedEvent);
+      }
       break;
     }
     case 'response.created': {
       const event = te as TResponseCreatedEvent;
       const renderedEvent = renderResponseCreated(event);
-      addEventFn(renderedEvent);
+      if (isAlwaysLoggedEvent || eventsLogLevel === 'verbose') {
+        addEventFn(renderedEvent);
+      }
       break;
     }
     case 'response.done': {
       const event = te as TResponseDoneEvent;
       const renderedEvent = renderResponseDone(event);
-      addEventFn(renderedEvent);
+      if (isAlwaysLoggedEvent || eventsLogLevel === 'verbose') {
+        addEventFn(renderedEvent);
+      }
       break;
     }
     case 'response.function_call_arguments.delta': {
       const event = te as TResponseFunctionCallArgumentsDeltaEvent;
       const renderedEvent = renderResponseFunctionCallArgumentsDelta(event);
-      addEventFn(renderedEvent);
+      if (isAlwaysLoggedEvent || eventsLogLevel === 'verbose') {
+        addEventFn(renderedEvent);
+      }
       break;
     }
     case 'response.function_call_arguments.done': {
       const event = te as TResponseFunctionCallArgumentsDoneEvent;
       const renderedEvent = renderResponseFunctionCallArgumentsDone(event);
-      addEventFn(renderedEvent);
+      if (isAlwaysLoggedEvent || eventsLogLevel === 'verbose') {
+        addEventFn(renderedEvent);
+      }
       break;
     }
     case 'response.output_audio.done': {
       const event = te as TResponseOutputAudioDoneEvent;
       const renderedEvent = renderResponseOutputAudioDone(event);
-      addEventFn(renderedEvent);
+      if (isAlwaysLoggedEvent || eventsLogLevel === 'verbose') {
+        addEventFn(renderedEvent);
+      }
       break;
     }
     case 'response.output_audio_transcript.delta': {
       const event = te as TResponseOutputAudioTranscriptDeltaEvent;
       const renderedEvent = renderResponseOutputAudioTranscriptDelta(event);
-      addEventFn(renderedEvent);
+      if (isAlwaysLoggedEvent || eventsLogLevel === 'verbose') {
+        addEventFn(renderedEvent);
+      }
       break;
     }
     case 'response.output_audio_transcript.done': {
       const event = te as TResponseOutputAudioTranscriptDoneEvent;
       const renderedEvent = renderResponseOutputAudioTranscriptDone(event);
-      addEventFn(renderedEvent);
+      if (isAlwaysLoggedEvent || eventsLogLevel === 'verbose') {
+        addEventFn(renderedEvent);
+      }
       break;
     }
     case 'response.output_item.added': {
       const event = te as TResponseOutputItemAddedEvent;
       const renderedEvent = renderResponseOutputItemAdded(event);
-      addEventFn(renderedEvent);
+      if (isAlwaysLoggedEvent || eventsLogLevel === 'verbose') {
+        addEventFn(renderedEvent);
+      }
       break;
     }
     case 'response.output_item.done': {
       const event = te as TResponseOutputItemDoneEvent;
       const renderedEvent = renderResponseOutputItemDone(event);
-      addEventFn(renderedEvent);
+      if (isAlwaysLoggedEvent || eventsLogLevel === 'verbose') {
+        addEventFn(renderedEvent);
+      }
       break;
     }
     case 'session.created': {
       const event = te as TSessionCreatedEvent;
       const renderedEvent = renderSessionCreated(event);
-      addEventFn(renderedEvent);
+      if (isAlwaysLoggedEvent || eventsLogLevel === 'verbose') {
+        addEventFn(renderedEvent);
+      }
       break;
     }
     case 'session.updated': {
       const event = te as TSessionUpdatedEvent;
       const renderedEvent = renderSessionUpdated(event);
-      addEventFn(renderedEvent);
+      if (isAlwaysLoggedEvent || eventsLogLevel === 'verbose') {
+        addEventFn(renderedEvent);
+      }
       break;
     }
     default:

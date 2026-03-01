@@ -15,8 +15,7 @@ function buildInstructions(runContext: RunContext<TSessionContext>) {
     Your name is pulse. You are an english speaking helpful and friendly assistant.
     User's name is ${runContext.context.userName}.
 
-    Important information regarding tool call - 
-    1. Always announce when you are about to execute a tool so that user knows you are doing something.
+    Remember: If you decide to make a tool call, then you must announce it to the user.
   `
 }
 
