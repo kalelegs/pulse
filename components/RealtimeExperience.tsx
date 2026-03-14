@@ -12,7 +12,7 @@ const RealTimeExperience = () => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const context = useCustomerContext();
   const addEvent = useChatStore((state) => state.addEvent);
-  const addMessage = useChatStore((state) => state.addMessage);
+  const addFinalisedMessage = useChatStore((state) => state.addFinalisedMessage);
   const eventsLogLevel = useChatStore((state) => state.eventsLogLevel);
   const { isLoading, isConnected, toggleConnect, sendMessage } = useSession({
     audioRef,
@@ -23,7 +23,7 @@ const RealTimeExperience = () => {
       sendMessage('Please greet the user by name and introduce yourself briefly.');
     },
     onTransportEvent: (te) => {
-      processEvent(te, addMessage, addEvent, eventsLogLevel);
+      processEvent(te, addFinalisedMessage, addEvent, eventsLogLevel);
     },
   });
 

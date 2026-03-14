@@ -1,4 +1,5 @@
 import { TRenderedEvent } from '@/components/Events/renderers/types';
+import { set } from 'zod/v3';
 
 export type TDuration = {
   /**
@@ -21,6 +22,7 @@ export type TDuration = {
 };
 
 export type TMessage = {
+  id: string;
   role: 'user' | 'assistant';
   mime: 'text/plain' | 'image/png';
   /**
@@ -39,10 +41,22 @@ export type TMessage = {
 
 export type TAddEventFn = (ev: TRenderedEvent) => void;
 export type TAddMessageFn = (message: TMessage) => void;
+export type TSetMessageFn = TAddMessageFn;
+export type TAppendMessageContentFn = (content: string) => void;
 export type TEventsLogLevel = 'verbose' | 'info';
 export type TChatStore = {
-  messages: TMessage[];
-  addMessage: TAddMessageFn;
+  /** Completely received messages  */
+  finalisedMessages: TMessage[];
+  /** Message that is still streaming */
+  activeMessage: TMessage | undefined;
+  addFinalisedMessage: TAddMessageFn;
+  setActiveMessage: TSetMessageFn;
+  /**
+   * Appends content to existing message
+   * Initial message has to be set before calling this function
+   * Otherwise it will just ignore
+   */
+  appendContentToActiveMessage: TAppendMessageContentFn;
   events: TRenderedEvent[];
   addEvent: TAddEventFn;
   clearEvents: () => void;

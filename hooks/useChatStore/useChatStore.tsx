@@ -3,13 +3,24 @@ import { TChatStore } from '@/types/ChatStore';
 import { TRenderedEvent } from '@/components/Events/renderers/types';
 
 export const useChatStore = create<TChatStore>((set) => ({
-  messages: [],
+  finalisedMessages: [],
+  activeMessage: undefined,
   events: [],
   renderToolCalls: true,
   eventsLogLevel: 'verbose',
-  addMessage: (message) =>
+  addFinalisedMessage: (message) =>
     set((state) => ({
-      messages: [...state.messages, message],
+      finalisedMessages: [...state.finalisedMessages, message],
+    })),
+  setActiveMessage: (message) =>
+    set((_) => ({
+      activeMessage: message,
+    })),
+  appendContentToActiveMessage: (content: string) =>
+    set((state) => ({
+      activeMessage: state.activeMessage
+        ? { ...state.activeMessage, content: state.activeMessage.content + content }
+        : undefined,
     })),
   addEvent: (event: TRenderedEvent) => set((state) => ({ events: [...state.events, event] })),
   clearEvents: () =>
