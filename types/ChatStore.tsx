@@ -1,5 +1,4 @@
 import { TRenderedEvent } from '@/components/Events/renderers/types';
-import { set } from 'zod/v3';
 
 export type TDuration = {
   /**
