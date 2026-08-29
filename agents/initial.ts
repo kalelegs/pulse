@@ -5,7 +5,6 @@ import { RunContext } from '@openai/agents';
 import getWeather from '@/tools/weather';
 import { TSessionContext } from '@/types';
 
-
 /**
  * Dynamic Instruction building
  */
@@ -16,14 +15,14 @@ function buildInstructions(runContext: RunContext<TSessionContext>) {
     User's name is ${runContext.context.userName}.
 
     Remember: If you decide to make a tool call, then you must announce it to the user.
-  `
+  `;
 }
 
 const initialAgent = new RealtimeAgent<TSessionContext>({
   name: 'Pulse Assistant',
   voice: EVoice.ECHO,
   instructions: buildInstructions,
-  tools: [getWeather]
+  tools: [getWeather],
 });
 
 export default initialAgent;

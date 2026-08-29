@@ -55,7 +55,9 @@ export const renderResponseDone = (event: TResponseDoneEvent): TRenderedEvent =>
   });
 };
 
-export const renderResponseOutputItemAdded = (event: TResponseOutputItemAddedEvent): TRenderedEvent => {
+export const renderResponseOutputItemAdded = (
+  event: TResponseOutputItemAddedEvent,
+): TRenderedEvent => {
   const itemType = readString(event.item?.type) ?? 'unknown';
   const name = readString(event.item?.name);
   const isHandoff = itemType === 'function_call' && Boolean(name?.startsWith('transfer_to_'));
@@ -82,7 +84,10 @@ export const renderResponseOutputItemAdded = (event: TResponseOutputItemAddedEve
   return buildRenderedEvent(event, {
     kind: itemType === 'function_call' ? 'Tool Selected' : 'Response',
     title: 'Output item added',
-    summary: itemType === 'function_call' ? toPreviewText(name ?? '', 'Tool selected') : `${itemType} item`,
+    summary:
+      itemType === 'function_call'
+        ? toPreviewText(name ?? '', 'Tool selected')
+        : `${itemType} item`,
     details: {
       event_id: event.event_id,
       response_id: event.response_id,
@@ -98,7 +103,9 @@ export const renderResponseOutputItemAdded = (event: TResponseOutputItemAddedEve
   });
 };
 
-export const renderResponseOutputItemDone = (event: TResponseOutputItemDoneEvent): TRenderedEvent => {
+export const renderResponseOutputItemDone = (
+  event: TResponseOutputItemDoneEvent,
+): TRenderedEvent => {
   const itemType = readString(event.item?.type) ?? 'unknown';
   return buildRenderedEvent(event, {
     kind: itemType === 'function_call' ? 'Tool' : 'Response',
@@ -120,7 +127,9 @@ export const renderResponseOutputItemDone = (event: TResponseOutputItemDoneEvent
   });
 };
 
-export const renderResponseContentPartAdded = (event: TResponseContentPartAddedEvent): TRenderedEvent => {
+export const renderResponseContentPartAdded = (
+  event: TResponseContentPartAddedEvent,
+): TRenderedEvent => {
   return buildRenderedEvent(event, {
     kind: 'Response',
     title: 'Content part added',
@@ -137,7 +146,9 @@ export const renderResponseContentPartAdded = (event: TResponseContentPartAddedE
   });
 };
 
-export const renderResponseContentPartDone = (event: TResponseContentPartDoneEvent): TRenderedEvent => {
+export const renderResponseContentPartDone = (
+  event: TResponseContentPartDoneEvent,
+): TRenderedEvent => {
   return buildRenderedEvent(event, {
     kind: 'Response',
     title: 'Content part done',
@@ -194,7 +205,9 @@ export const renderResponseOutputAudioTranscriptDone = (
   });
 };
 
-export const renderResponseOutputAudioDone = (event: TResponseOutputAudioDoneEvent): TRenderedEvent => {
+export const renderResponseOutputAudioDone = (
+  event: TResponseOutputAudioDoneEvent,
+): TRenderedEvent => {
   return buildRenderedEvent(event, {
     kind: 'Audio Done',
     title: 'Output audio completed',

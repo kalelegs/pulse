@@ -67,7 +67,9 @@ export const renderConversationItemDone = (event: TConversationItemDoneEvent): T
   });
 };
 
-export const renderConversationItemRetrieved = (event: TConversationItemRetrievedEvent): TRenderedEvent => {
+export const renderConversationItemRetrieved = (
+  event: TConversationItemRetrievedEvent,
+): TRenderedEvent => {
   return buildRenderedEvent(event, {
     kind: 'Conversation',
     title: 'Item retrieved',

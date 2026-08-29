@@ -1,4 +1,4 @@
-import { TTransportEvent } from "@/types";
+import { TTransportEvent } from '@/types';
 
 /**
  * Represents rendering tones for the event

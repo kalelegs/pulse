@@ -10,7 +10,9 @@ export const renderRateLimitsUpdated = (event: TRateLimitsUpdatedEvent): TRender
     kind: 'Rate Limit',
     title: 'Rate limits updated',
     summary:
-      typeof remaining === 'number' ? `${remaining.toLocaleString()} tokens remaining` : 'Rate limit updated',
+      typeof remaining === 'number'
+        ? `${remaining.toLocaleString()} tokens remaining`
+        : 'Rate limit updated',
     details: {
       event_id: event.event_id,
       rate_limits: event.rate_limits,

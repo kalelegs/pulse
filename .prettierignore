@@ -7,3 +7,6 @@ package-lock.json
 bun.lock
 yarn.lock
 pnpm-lock.yaml
+
+# Captured session dump (generated data, not source)
+events.log.json

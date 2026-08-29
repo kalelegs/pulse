@@ -10,7 +10,9 @@ import { buildRenderedEvent } from './common';
 import { toneAudioDone, toneAudioStart, toneInputAudio } from './tones';
 import { TRenderedEvent } from './types';
 
-export const renderInputAudioBufferCommitted = (event: TInputAudioBufferCommittedEvent): TRenderedEvent => {
+export const renderInputAudioBufferCommitted = (
+  event: TInputAudioBufferCommittedEvent,
+): TRenderedEvent => {
   return buildRenderedEvent(event, {
     kind: 'Input Audio',
     title: 'Input buffer committed',
@@ -24,7 +26,9 @@ export const renderInputAudioBufferCommitted = (event: TInputAudioBufferCommitte
   });
 };
 
-export const renderInputAudioSpeechStarted = (event: TInputAudioBufferSpeechStartedEvent): TRenderedEvent => {
+export const renderInputAudioSpeechStarted = (
+  event: TInputAudioBufferSpeechStartedEvent,
+): TRenderedEvent => {
   return buildRenderedEvent(event, {
     kind: 'Input Audio',
     title: 'Speech started',
@@ -38,7 +42,9 @@ export const renderInputAudioSpeechStarted = (event: TInputAudioBufferSpeechStar
   });
 };
 
-export const renderInputAudioSpeechStopped = (event: TInputAudioBufferSpeechStoppedEvent): TRenderedEvent => {
+export const renderInputAudioSpeechStopped = (
+  event: TInputAudioBufferSpeechStoppedEvent,
+): TRenderedEvent => {
   return buildRenderedEvent(event, {
     kind: 'Input Audio',
     title: 'Speech stopped',
@@ -52,7 +58,9 @@ export const renderInputAudioSpeechStopped = (event: TInputAudioBufferSpeechStop
   });
 };
 
-export const renderOutputAudioBufferStarted = (event: TOutputAudioBufferStartedEvent): TRenderedEvent => {
+export const renderOutputAudioBufferStarted = (
+  event: TOutputAudioBufferStartedEvent,
+): TRenderedEvent => {
   return buildRenderedEvent(event, {
     kind: 'Audio Start',
     title: 'Output playback started',
@@ -65,7 +73,9 @@ export const renderOutputAudioBufferStarted = (event: TOutputAudioBufferStartedE
   });
 };
 
-export const renderOutputAudioBufferStopped = (event: TOutputAudioBufferStoppedEvent): TRenderedEvent => {
+export const renderOutputAudioBufferStopped = (
+  event: TOutputAudioBufferStoppedEvent,
+): TRenderedEvent => {
   return buildRenderedEvent(event, {
     kind: 'Audio Done',
     title: 'Output playback stopped',
