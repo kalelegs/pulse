@@ -13,7 +13,7 @@ export const useChatStore = create<TChatStore>((set) => ({
       finalisedMessages: [...state.finalisedMessages, message],
     })),
   setActiveMessage: (message) =>
-    set((_) => ({
+    set(() => ({
       activeMessage: message,
     })),
   appendContentToActiveMessage: (content: string) =>

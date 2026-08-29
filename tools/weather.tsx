@@ -42,7 +42,7 @@ const getWeather = tool({
   parameters: z.object({
     city: z.string().describe('City name to get the weather for'),
   }),
-  async execute({ city }, context, details) {
+  async execute({ city }) {
     console.log('weather tool called');
     const geocodingResponse = await fetch(
       `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`,

@@ -5,7 +5,6 @@ import { TMessage } from '@/types/ChatStore';
 
 const MessageList = () => {
   const finalisedMessages = useChatStore((state) => state.finalisedMessages);
-  const activeMessage = useChatStore((state) => state.activeMessage);
 
   return (
     <div className="">
