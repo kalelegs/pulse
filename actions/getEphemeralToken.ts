@@ -1,5 +1,7 @@
 "use server";
 
+import { REALTIME_MODEL } from "@/lib/utils";
+
 /**
  * This is a server action that returns a short lived token for opening a direct WebRTC Connection to OpenAI
  * @returns string (the actual token itself)
@@ -19,7 +21,7 @@ export const getEphemeralToken = async (): Promise<string> => {
         body: JSON.stringify({
             session: {
                 type: "realtime",
-                model: "gpt-realtime",
+                model: REALTIME_MODEL,
             },
         }),
     });

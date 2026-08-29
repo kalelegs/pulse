@@ -2,6 +2,7 @@ import { getEphemeralToken } from '@/actions/getEphemeralToken';
 import initialAgent from '@/agents/initial';
 import { OpenAIRealtimeWebRTC, RealtimeSession, TransportEvent } from '@openai/agents/realtime';
 import { TSessionContext, TUseSessionOptions } from '@/types';
+import { REALTIME_MODEL } from '@/lib/utils';
 
 const createSession = async (
   options: TUseSessionOptions,
@@ -10,7 +11,7 @@ const createSession = async (
   const apiKey = await getEphemeralToken();
 
   const session = new RealtimeSession<TSessionContext>(initialAgent, {
-    model: 'gpt-realtime',
+    model: REALTIME_MODEL,
     transport: new OpenAIRealtimeWebRTC(audioElement ? { audioElement } : undefined),
     context: options.context,
   });

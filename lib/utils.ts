@@ -18,3 +18,9 @@ export enum EVoice {
   MARIN = "marin",
   CEDAR = "cedar",
 }
+
+/**
+ * The realtime model id. Used both by the server action that mints the ephemeral
+ * client secret and by the client-side RealtimeSession — they must never drift.
+ */
+export const REALTIME_MODEL = 'gpt-realtime-2.1';
