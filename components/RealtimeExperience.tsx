@@ -14,7 +14,7 @@ const RealTimeExperience = () => {
   const addEvent = useChatStore((state) => state.addEvent);
   const addFinalisedMessage = useChatStore((state) => state.addFinalisedMessage);
   const eventsLogLevel = useChatStore((state) => state.eventsLogLevel);
-  const { isLoading, isConnected, toggleConnect, sendMessage } = useSession({
+  const { isLoading, isConnected, error, toggleConnect, sendMessage } = useSession({
     audioRef,
     context,
 
@@ -38,13 +38,20 @@ const RealTimeExperience = () => {
             <h1 className="my-2 text-lg font-bold">Pulse: JSON Rendering Playground</h1>
             <h2>Modular generic components rendered from JSON specs.</h2>
           </div>
-          <div className="flex items-center gap-2">
-            <SettingsPanel />
-            <ConnectButton
-              isLoading={isLoading}
-              isConnected={isConnected}
-              onClick={toggleConnect}
-            />
+          <div className="flex flex-col items-end gap-2">
+            <div className="flex items-center gap-2">
+              <SettingsPanel />
+              <ConnectButton
+                isLoading={isLoading}
+                isConnected={isConnected}
+                onClick={toggleConnect}
+              />
+            </div>
+            {error && (
+              <p role="alert" className="text-destructive max-w-sm text-right text-sm">
+                {error.message}
+              </p>
+            )}
           </div>
         </div>
       </section>

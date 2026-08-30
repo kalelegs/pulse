@@ -43,6 +43,8 @@ export type TUseSessionRetval = {
   session?: RealtimeSession<TSessionContext>;
   isLoading: boolean;
   isConnected: boolean;
+  /** Set when the last connect attempt failed. Cleared on the next attempt. */
+  error?: Error;
   sendMessage: (message: string) => void;
   connect: () => Promise<void>;
   disconnect: () => void;
