@@ -1,8 +1,14 @@
 import { getEphemeralToken } from '@/actions/getEphemeralToken';
 import initialAgent from '@/agents/initial';
-import { OpenAIRealtimeWebRTC, RealtimeSession, TransportEvent } from '@openai/agents/realtime';
+import {
+  OpenAIRealtimeWebRTC,
+  RealtimeItem,
+  RealtimeSession,
+  TransportEvent,
+} from '@openai/agents/realtime';
 import { TSessionContext, TUseSessionOptions } from '@/types';
-import { REALTIME_MODEL } from '@/lib/utils';
+import type { RefObject } from 'react';
+import { REALTIME_MODEL, TRANSCRIPTION_LANGUAGE, TRANSCRIPTION_MODEL } from '@/lib/utils';
 
 /**
  * How long we wait for the browser microphone prompt to be answered. An unanswered prompt leaves
@@ -96,8 +102,14 @@ const requestMicrophone = async (timeoutMs = MIC_PERMISSION_TIMEOUT_MS): Promise
  *
  * The microphone is acquired up front and passed to the transport, which then skips its own
  * `getUserMedia` call. Every failure path after that acquisition releases the microphone again.
+ *
+ * @param optionsRef The caller's live options. Connect-time configuration is read once, but the
+ *   event handlers are read per event so a re-render can replace them.
  */
-const createSession = async (options: TUseSessionOptions): Promise<TCreatedSession> => {
+const createSession = async (
+  optionsRef: RefObject<TUseSessionOptions>,
+): Promise<TCreatedSession> => {
+  const options = optionsRef.current;
   const audioElement = options.audioRef?.current;
   const mediaStream = await requestMicrophone();
 
@@ -112,14 +124,51 @@ const createSession = async (options: TUseSessionOptions): Promise<TCreatedSessi
       model: REALTIME_MODEL,
       transport: new OpenAIRealtimeWebRTC({ ...(audioElement && { audioElement }), mediaStream }),
       context: options.context,
+      // Repeats what the ephemeral token already asked for, and it is not redundant: the transport
+      // sends a `session.update` the moment the data channel opens, filling every `audio.input`
+      // field the app left undefined from `DEFAULT_OPENAI_REALTIME_SESSION_CONFIG`
+      // (`@openai/agents-realtime/dist/openaiRealtimeBase.mjs`). Without this the minted session's
+      // transcription config is overwritten by the SDK's before the first word is spoken.
+      config: {
+        audio: {
+          input: {
+            transcription: { model: TRANSCRIPTION_MODEL, language: TRANSCRIPTION_LANGUAGE },
+          },
+        },
+      },
     });
     session = nextSession;
 
     // events ref: https://openai.github.io/openai-agents-js/openai/agents-realtime/type-aliases/realtimesessioneventtypes/#transport_event
     nextSession.on('transport_event', (te: TransportEvent) => {
       console.debug('transport event', te);
-      // call upstream
-      options.onTransportEvent?.(te);
+      // Read through the ref, not the snapshot above: this handler outlives the render that
+      // created the session, and the caller rebuilds `onTransportEvent` whenever something it
+      // closes over changes (`eventsLogLevel`, from `SettingsPanel`). Closing over the snapshot
+      // froze that setting until the next reconnect.
+      //
+      // Caught for the same reason as `history_updated` below: a throw from here escapes into the
+      // SDK's emitter and surfaces as an `error` on a session that is perfectly healthy. The
+      // caller guards its two consumers separately as well, so a failure in one cannot starve the
+      // other (`components/RealtimeExperience`); this is the outer net for anything else.
+      try {
+        optionsRef.current.onTransportEvent?.(te);
+      } catch (error) {
+        console.error('onTransportEvent handler failed', error);
+      }
+    });
+
+    // The SDK's server-authoritative conversation record, forwarded untouched. Same ref-reading
+    // rule as above, plus a swallowing catch: this feeds a debug view only, and a throwing
+    // subscriber here would surface as a session `error` event on a session that is perfectly
+    // healthy. Nothing downstream may write back — `updateHistory` throws on assistant audio
+    // items, so history is read-only for this app (`lib/EventProcessor/SdkHistory.md`).
+    nextSession.on('history_updated', (history: RealtimeItem[]) => {
+      try {
+        optionsRef.current.onHistoryUpdated?.(history);
+      } catch (error) {
+        console.error('onHistoryUpdated handler failed', error);
+      }
     });
 
     // `close()` cancels an in-flight connection attempt, which turns a hung connect into a

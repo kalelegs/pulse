@@ -44,24 +44,11 @@ const SettingsPanel = () => {
           </AlertDialogDescription>
         </AlertDialogHeader>
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div className="space-y-1">
-            <Label className="text-xs">Render tool calls</Label>
-            <Select
-              value={renderToolCalls ? 'true' : 'false'}
-              onValueChange={(value) => setRenderToolCalls(value === 'true')}
-            >
-              <SelectTrigger className="w-36">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="true">Yes</SelectItem>
-                <SelectItem value="false">No</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-1">
+            <p className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
+              Recording
+            </p>
             <Label className="text-xs">Events log level</Label>
             <Select
               value={eventsLogLevel}
@@ -75,6 +62,34 @@ const SettingsPanel = () => {
                 <SelectItem value="verbose">verbose</SelectItem>
               </SelectContent>
             </Select>
+            <p className="text-muted-foreground text-xs">
+              Decides which transport events are <strong>captured</strong> into the panel.
+              <code> info</code> keeps only structural events, so anything it skips is gone for good
+              — it is never recorded.
+            </p>
+          </div>
+
+          <div className="space-y-1">
+            <p className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
+              Display
+            </p>
+            <Label className="text-xs">Render tool calls</Label>
+            <Select
+              value={renderToolCalls ? 'true' : 'false'}
+              onValueChange={(value) => setRenderToolCalls(value === 'true')}
+            >
+              <SelectTrigger className="w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="true">Yes</SelectItem>
+                <SelectItem value="false">No</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-muted-foreground text-xs">
+              Hides tool-call events from the list without discarding them. Per-category filtering
+              lives on the chips in the Events panel itself.
+            </p>
           </div>
         </div>
 

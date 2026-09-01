@@ -38,6 +38,7 @@
   --color-primary: var(--primary);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
+  --color-block-accent: var(--block-accent);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
   --radius-sm: calc(var(--radius) - 4px);
@@ -56,6 +57,14 @@
   --popover-foreground: oklch(0.145 0 0);
   --primary: oklch(0.488 0.243 264.376);
   --primary-foreground: oklch(0.97 0.014 254.604);
+  /*
+    Accent used by json-render block pictograms (IconBlock tone="primary",
+    MetricBlock's leading icon). Deliberately separate from `--primary`: primary
+    is a *surface* colour (button fills), so it is chosen against
+    `--primary-foreground`, while this is drawn as a thin stroke directly on
+    `--card` and has to satisfy a non-text contrast target there instead.
+  */
+  --block-accent: oklch(0.488 0.243 264.376);
   --secondary: oklch(0.967 0.001 286.375);
   --secondary-foreground: oklch(0.21 0.006 285.885);
   --muted: oklch(0.97 0 0);
@@ -94,6 +103,8 @@
   --popover-foreground: oklch(0.985 0 0);
   --primary: oklch(0.42 0.18 266);
   --primary-foreground: oklch(0.97 0.014 254.604);
+  /* Lifted well above `--primary` so a hairline icon still reads on `--card`. */
+  --block-accent: oklch(0.75 0.13 255);
   --secondary: oklch(0.274 0.006 286.033);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);

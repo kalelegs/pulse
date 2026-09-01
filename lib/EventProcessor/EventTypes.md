@@ -61,3 +61,10 @@ Important Notes :
 5. finally audio finishes
 
 audio is not tied to an item (but rather session)
+
+## Why this, and not `session.history`
+
+The SDK maintains its own conversation record and emits `history_updated`. It is not what the
+transcript is built from, and the decision is written up in [`SdkHistory.md`](./SdkHistory.md) —
+short version: history carries no partial transcripts, lands later than the events above, and
+cannot be written back.

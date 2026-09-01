@@ -25,6 +25,12 @@ e.g.
 type TAgent = {};
 ```
 
+### 3. Keep every file under 200 lines.
+
+A file you can read in one sitting is a file you can safely change. Split by
+responsibility — one component, one hook, one concern per file — never by line
+count alone.
+
 ## Package Manager
 
 - This project uses bun.

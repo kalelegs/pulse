@@ -1,24 +1,31 @@
 'use client';
 
-import { KeyboardEvent } from 'react';
+import { KeyboardEvent, memo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { EVENT_CATEGORIES, getEventCategory } from './categories';
 import { TRenderedEvent } from './renderers/types';
+
+const CATEGORY_LABELS = new Map(EVENT_CATEGORIES.map((category) => [category.id, category.label]));
 
 type TLogCardProps = {
   incomingEvent: TRenderedEvent;
   copied: boolean;
   expanded: boolean;
-  onToggleExpand: () => void;
-  onCopy: () => void;
+  /** Takes the event id so the handler stays stable and every other row can skip re-rendering. */
+  onToggleExpand: (eventId: string) => void;
+  onCopy: (event: TRenderedEvent) => void;
 };
 
 const EventCard = ({ copied, expanded, onToggleExpand, onCopy, incomingEvent }: TLogCardProps) => {
+  const toggleExpand = () => onToggleExpand(incomingEvent.id);
+  const categoryLabel = CATEGORY_LABELS.get(getEventCategory(incomingEvent));
+
   const onCardKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
-      onToggleExpand();
+      toggleExpand();
     }
   };
 
@@ -33,7 +40,7 @@ const EventCard = ({ copied, expanded, onToggleExpand, onCopy, incomingEvent }: 
       <div
         role="button"
         tabIndex={0}
-        onClick={onToggleExpand}
+        onClick={toggleExpand}
         onKeyDown={onCardKeyDown}
         aria-expanded={expanded}
         className="flex cursor-pointer items-start justify-between gap-3"
@@ -64,7 +71,7 @@ const EventCard = ({ copied, expanded, onToggleExpand, onCopy, incomingEvent }: 
             title={copied ? 'Copied' : 'Copy event JSON'}
             onClick={(event) => {
               event.stopPropagation();
-              onCopy();
+              onCopy(incomingEvent);
             }}
           >
             {copied ? (
@@ -110,8 +117,9 @@ const EventCard = ({ copied, expanded, onToggleExpand, onCopy, incomingEvent }: 
       </div>
       <div className="mt-3 flex items-center justify-between gap-2">
         <code className="text-muted-foreground truncate rounded bg-black/20 px-1.5 py-0.5 text-[10px]">
-          {incomingEvent.kind}
+          {incomingEvent.rawEvent.type}
         </code>
+        <span className="text-muted-foreground shrink-0 text-[10px]">{categoryLabel}</span>
       </div>
       {expanded ? (
         <div className="mt-3 rounded-md border border-white/10 bg-black/20 p-2.5">
@@ -124,4 +132,8 @@ const EventCard = ({ copied, expanded, onToggleExpand, onCopy, incomingEvent }: 
   );
 };
 
-export default EventCard;
+/**
+ * Rows are pure in their props, and the list hands down stable callbacks, so a long log only
+ * re-renders the row whose `expanded`/`copied` actually changed.
+ */
+export default memo(EventCard);

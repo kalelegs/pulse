@@ -1,73 +1,50 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { RiArrowDownLine } from '@remixicon/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import EventCard from './EventCard';
+import EventFilterBar from './EventFilterBar';
+import EventsEmptyState from './EventsEmptyState';
+import { useChatAutoScroll } from '@/components/Chat/useChatAutoScroll';
 import { useChatStore } from '@/hooks';
+import { EVENT_LOG_LIMIT } from '@/hooks/useChatStore/useChatStore';
 import { TRenderedEvent } from './renderers/types';
-import { TEventsLogLevel } from '@/types/ChatStore';
+import { useEventFilters } from './useEventFilters';
 
-const INFO_ONLY_EVENT_TYPES = new Set<string>([
-  'conversation.item.input_audio_transcription.delta',
-  'response.function_call_arguments.delta',
-  'response.output_audio_transcript.delta',
-]);
-const SEARCH_DEBOUNCE_MS = 500;
+const SEARCH_DEBOUNCE_MS = 300;
 
-const isToolCallEvent = (event: TRenderedEvent) => {
-  const type = event.rawEvent.type;
-  const itemType = (event.rawEvent as { item?: { type?: string } }).item?.type;
+/** How long a copied row stays flashed. */
+const COPY_FLASH_MS = 1200;
 
-  return (
-    type === 'response.function_call_arguments.delta' ||
-    type === 'response.function_call_arguments.done' ||
-    itemType === 'function_call' ||
-    itemType === 'function_call_output'
-  );
-};
-
-const shouldRenderEvent = (
-  event: TRenderedEvent,
-  renderToolCalls: boolean,
-  eventsLogLevel: TEventsLogLevel,
-) => {
-  if (!renderToolCalls && isToolCallEvent(event)) {
-    return false;
-  }
-
-  if (eventsLogLevel === 'info' && INFO_ONLY_EVENT_TYPES.has(event.rawEvent.type)) {
-    return false;
-  }
-
-  return true;
-};
-
-const matchesEventSearch = (event: TRenderedEvent, searchQuery: string) => {
-  if (!searchQuery) {
-    return true;
-  }
-
-  const normalizedQuery = searchQuery.toLowerCase();
-  const searchableText =
-    `${event.kind} ${event.title} ${event.summary} ${JSON.stringify(event.rawEvent)}`.toLowerCase();
-  return searchableText.includes(normalizedQuery);
-};
-
+/**
+ * The transport event log — the `Events` tab of the debug panel (`EventsPanel`).
+ *
+ * Everything here is display-only. `eventsLogLevel` (Settings) decides what is *recorded* into the
+ * store; the chips and the search box decide what is *shown*, and hide nothing permanently — the
+ * header count reads "shown / recorded" so the difference stays visible.
+ */
 const EventList = () => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [expandedIds, setExpandedIds] = useState<string[]>([]);
   const [searchInputValue, setSearchInputValue] = useState('');
+  // Debounced copy of the input. Kept local rather than in the store: it changes on every
+  // keystroke and no other component cares, so putting it in zustand would wake every subscriber.
   const [searchQuery, setSearchQuery] = useState('');
-  const listRef = useRef<HTMLDivElement>(null);
+  const copyFlashRef = useRef<number | undefined>(undefined);
+  // Same pinned-detection the chat column uses: it discovers its scroller by walking up the DOM,
+  // so the only thing this list has to do is hand it the growing element.
+  const { listRef, isPinned, scrollToBottom } = useChatAutoScroll();
+
   const events = useChatStore((state) => state.events);
   const renderToolCalls = useChatStore((state) => state.renderToolCalls);
-  const eventsLogLevel = useChatStore((state) => state.eventsLogLevel);
   const clearEvents = useChatStore((state) => state.clearEvents);
-  const visibleEvents = events.filter((event) =>
-    shouldRenderEvent(event, renderToolCalls, eventsLogLevel),
-  );
-  const filteredEvents = visibleEvents.filter((event) => matchesEventSearch(event, searchQuery));
+  const hiddenCategories = useChatStore((state) => state.hiddenEventCategories);
+  const setHiddenCategories = useChatStore((state) => state.setHiddenEventCategories);
+
+  const { visibleEvents, countsByCategory, hiddenByCategoryCount, hiddenByToolFilterCount } =
+    useEventFilters({ events, hiddenCategories, renderToolCalls, searchQuery });
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -80,23 +57,34 @@ const EventList = () => {
     };
   }, [searchInputValue]);
 
-  useEffect(() => {
-    const container = listRef.current;
-    if (!container) {
-      return;
-    }
-    container.scrollTop = container.scrollHeight;
-  }, [filteredEvents.length]);
+  useEffect(
+    () => () => {
+      window.clearTimeout(copyFlashRef.current);
+    },
+    [],
+  );
 
-  const onCopy = async (event: TRenderedEvent) => {
+  const onCopy = useCallback(async (event: TRenderedEvent) => {
     try {
       await navigator.clipboard.writeText(JSON.stringify(event.rawEvent, null, 2));
       setCopiedId(event.id);
-      setTimeout(() => setCopiedId((value) => (value === event.id ? null : value)), 1200);
+      window.clearTimeout(copyFlashRef.current);
+      copyFlashRef.current = window.setTimeout(
+        () => setCopiedId((value) => (value === event.id ? null : value)),
+        COPY_FLASH_MS,
+      );
     } catch (error) {
       console.error('Failed to copy event to clipboard.', error);
     }
-  };
+  }, []);
+
+  const onToggleExpand = useCallback((eventId: string) => {
+    setExpandedIds((currentIds) =>
+      currentIds.includes(eventId)
+        ? currentIds.filter((id) => id !== eventId)
+        : [...currentIds, eventId],
+    );
+  }, []);
 
   const onClearEvents = () => {
     setCopiedId(null);
@@ -104,14 +92,23 @@ const EventList = () => {
     clearEvents();
   };
 
+  const onResetFilters = () => {
+    setSearchInputValue('');
+    setSearchQuery('');
+    setHiddenCategories([]);
+  };
+
   return (
-    <section className="bg-card flex min-h-0 flex-col overflow-hidden rounded-md border lg:flex-4">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <div className="border-b px-4 py-3.5">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <h3 className="text-sm font-semibold">Realtime Events</h3>
           <div className="flex items-center gap-2">
-            <span className="text-muted-foreground text-xs">
-              {filteredEvents.length}/{visibleEvents.length}
+            <span
+              className="text-muted-foreground text-xs tabular-nums"
+              title={`Shown / retained. Filters never drop a retained event; the log keeps the most recent ${EVENT_LOG_LIMIT}.`}
+            >
+              {visibleEvents.length}/{events.length}
             </span>
             <Button
               type="button"
@@ -130,41 +127,56 @@ const EventList = () => {
             type="search"
             value={searchInputValue}
             onChange={(event) => setSearchInputValue(event.target.value)}
-            placeholder="Search events..."
+            placeholder="Filter by type, summary or id..."
             className="h-8 text-xs"
           />
         </div>
+        <EventFilterBar
+          hiddenCategories={hiddenCategories}
+          countsByCategory={countsByCategory}
+          onChange={setHiddenCategories}
+        />
       </div>
-      <div
-        ref={listRef}
-        className="bg-muted/20 flex min-h-0 flex-1 flex-col gap-3 overflow-auto p-4"
-      >
-        {filteredEvents.length === 0 ? (
-          <p className="text-muted-foreground p-2 text-xs">
-            {searchQuery.trim()
-              ? 'No events match your search.'
-              : 'Waiting for transport events...'}
-          </p>
-        ) : (
-          filteredEvents.map((event) => (
-            <EventCard
-              key={event.id}
-              incomingEvent={event}
-              copied={copiedId === event.id}
-              expanded={expandedIds.includes(event.id)}
-              onToggleExpand={() => {
-                setExpandedIds((currentIds) =>
-                  currentIds.includes(event.id)
-                    ? currentIds.filter((id) => id !== event.id)
-                    : [...currentIds, event.id],
-                );
-              }}
-              onCopy={() => void onCopy(event)}
+      <div className="bg-muted/20 min-h-0 flex-1 overflow-auto p-4">
+        <div ref={listRef} className="flex flex-col gap-3">
+          {visibleEvents.length === 0 ? (
+            <EventsEmptyState
+              recordedCount={events.length}
+              hiddenCategoryCount={hiddenCategories.length}
+              hiddenByCategoryCount={hiddenByCategoryCount}
+              hiddenByToolFilterCount={hiddenByToolFilterCount}
+              searchQuery={searchQuery}
+              onReset={onResetFilters}
             />
-          ))
-        )}
+          ) : (
+            visibleEvents.map((event) => (
+              <EventCard
+                key={event.id}
+                incomingEvent={event}
+                copied={copiedId === event.id}
+                expanded={expandedIds.includes(event.id)}
+                onToggleExpand={onToggleExpand}
+                onCopy={onCopy}
+              />
+            ))
+          )}
+          {visibleEvents.length > 0 && !isPinned ? (
+            <div className="pointer-events-none sticky bottom-0 flex justify-center pt-1">
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                className="pointer-events-auto h-7 px-2 text-xs shadow-sm"
+                onClick={scrollToBottom}
+              >
+                <RiArrowDownLine className="size-3.5" aria-hidden="true" />
+                Jump to latest
+              </Button>
+            </div>
+          ) : null}
+        </div>
       </div>
-    </section>
+    </div>
   );
 };
 

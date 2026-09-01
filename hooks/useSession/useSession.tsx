@@ -24,14 +24,30 @@ export const useSession = (options: TUseSessionOptions): TUseSessionRetval => {
   // guards against a second connect acquiring a microphone the first one would overwrite
   const isConnectingRef = useRef(false);
   const optionsRef = useRef(options);
-  optionsRef.current = options;
+  // Written in an effect rather than during render: a render-phase write to a ref is not safe
+  // under concurrent React, which may render a component and throw the result away.
+  useEffect(() => {
+    optionsRef.current = options;
+  });
 
   /** Releases everything we own. Never touches React state, so it is safe during unmount. */
   const teardown = useCallback(() => {
+    const hadSession = sessionRef.current !== undefined;
     closeSession(sessionRef.current);
     sessionRef.current = undefined;
     stopMediaStream(mediaStreamRef.current);
     mediaStreamRef.current = undefined;
+
+    if (!hadSession) {
+      // A failed connect never had a session to end, so nothing downstream needs closing either.
+      return;
+    }
+    try {
+      optionsRef.current.onDisconnect?.();
+    } catch (handlerError) {
+      // The transport is already down; a failing handler must not escape from cleanup.
+      console.error('onDisconnect handler failed', handlerError);
+    }
   }, []);
 
   const disconnect = useCallback(() => {
@@ -48,7 +64,7 @@ export const useSession = (options: TUseSessionOptions): TUseSessionRetval => {
     setIsLoading(true);
     setError(undefined);
     try {
-      const { session: nextSession, mediaStream } = await createSession(optionsRef.current);
+      const { session: nextSession, mediaStream } = await createSession(optionsRef);
 
       if (isUnmountedRef.current) {
         // Unmounted mid-connect: nobody is left to own the session or the microphone.
@@ -91,13 +107,17 @@ export const useSession = (options: TUseSessionOptions): TUseSessionRetval => {
 
   const sendMessage = useCallback((message: TRealtimeUserInput) => {
     if (!sessionRef.current) {
-      return;
+      // Nothing is connected, so nothing was said. Reported rather than swallowed: a caller that
+      // echoes the message into the transcript would otherwise show the user saying something the
+      // model has no record of, with no reply ever coming.
+      return false;
     }
     if (typeof message === 'string' && !message.trim()) {
       // empty message
-      return;
+      return false;
     }
     sessionRef.current.sendMessage(message);
+    return true;
   }, []);
 
   useEffect(() => {
