@@ -64,6 +64,15 @@ export const ICON_NAMES = [
   'fire',
   'leaf',
   'home',
+  'trending-up',
+  'trending-down',
+  'stock',
+  'dollar',
+  'percent',
+  'news',
+  'building',
+  'briefcase',
+  'scales',
 ] as const;
 
 /** Every icon name an agent may reference from any block that takes an `icon` prop. */

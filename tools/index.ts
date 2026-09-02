@@ -2,6 +2,9 @@
 
 import type { Tool } from '@openai/agents';
 import renderUi from '@/tools/renderUi';
+import getStockHistory from '@/tools/stockHistory';
+import getStockNews from '@/tools/stockNews';
+import getStockQuote from '@/tools/stockQuote';
 import getWeather from '@/tools/weather';
 
 /**
@@ -13,20 +16,34 @@ import getWeather from '@/tools/weather';
  */
 const ENABLE_GENERATIVE_UI_TOOL = true;
 
-/** Tool names (`tool.name`, the string the model calls) held back from the agent. */
+/** Tool names (`tool.name`, the string the model calls) held back from every agent. */
 const DISABLED_TOOL_NAMES: string[] = ENABLE_GENERATIVE_UI_TOOL ? [] : ['render_ui'];
 
-/**
- * The tool registry.
- *
- * Adding a tool is one line here, the same way adding a block is one line in
- * `lib/json-render/blocks/index.ts`. Agents import `agentTools` from
- * this barrel rather than reaching for individual modules, so a tool is never
- * silently available to one agent and missing from another.
- */
-const tools: Tool[] = [getWeather, renderUi];
+/** Applies the global switches to one agent's tool set. Every set below goes through it. */
+const enabled = (definitions: Tool[]): Tool[] =>
+  definitions.filter((definition) => !DISABLED_TOOL_NAMES.includes(definition.name));
 
-/** Every enabled tool, ready to hand to a `RealtimeAgent`. */
-export const agentTools: Tool[] = tools.filter(
-  (definition) => !DISABLED_TOOL_NAMES.includes(definition.name),
-);
+/**
+ * The tool registry: one named set per agent.
+ *
+ * Adding a tool is one line in the right set, the same way adding a block is
+ * one line in `lib/json-render/blocks/index.ts`. Agents import their set from
+ * this barrel rather than reaching for individual modules, so the global
+ * switches above apply everywhere and a tool is never silently available to one
+ * agent and missing from another that should share it.
+ *
+ * Each set is what one agent's realtime session config carries, so a
+ * specialist's set is also its instruction budget: `render_ui` is in every set
+ * because its cost is worth paying wherever the model may need a custom panel.
+ */
+
+/** The general assistant: weather and the generative-UI escape hatch. */
+export const assistantTools: Tool[] = enabled([getWeather, renderUi]);
+
+/** The stock analyst: quotes, history, news and the generative-UI escape hatch. */
+export const stockAnalystTools: Tool[] = enabled([
+  getStockQuote,
+  getStockHistory,
+  getStockNews,
+  renderUi,
+]);

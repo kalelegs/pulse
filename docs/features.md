@@ -34,42 +34,57 @@
 
 ## Multi-Agent
 
-- Realtime agents are defined in [`/agents`](/agents/) and configured as reusable modules.
-- Agent behavior is declared with structured properties like `name`, `voice`, `instructions`, and `tools`.
-- This architecture allows us to have a scalable hierarchy to handle context overflow and tool selection accuracy without giving up simplicity.
-  - Think of it as a similar abstraction as [skills](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview) or Tool-Sets i.e. a way to group related tools.
-- This repo prefers multi-agent orchestration via LLM, but does not restrict orchestration via code. [[Read More](https://openai.github.io/openai-agents-js/guides/multi-agent/#orchestrating-via-llm)]
+- Realtime agents live in [`/agents`](/agents/) as reusable modules: a `name`, a `voice`, a
+  `handoffDescription`, an instruction builder and a tool set from [`/tools`](/tools/).
+- A session starts on the **root agent** (`Pulse Assistant`) and hands off to **specialists**, each
+  a bundle of related tools with its own prompt — the same idea as
+  [skills](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview) or tool-sets.
+  A realtime session only carries the _current_ agent's tools and instructions, so a handoff is also
+  a budget boundary: the root never pays connect latency for a specialist's tools.
+- Orchestration is by the LLM through SDK handoffs
+  ([read more](https://openai.github.io/openai-agents-js/guides/multi-agent/#orchestrating-via-llm)).
+  What keeps it modular (details in [`agents/README.md`](/agents/README.md)):
+  - **A registry, not a tree of imports.** `agents/index.ts` gives the root `handoffs:
+specialistAgents` and every specialist a handoff back to the root, assigned after construction
+    so no module imports another agent.
+  - **Prompts decoupled by `handoffDescription`.** The SDK generates one `transfer_to_<name>` tool
+    per handoff from the target's description, so no prompt names another agent. Adding a
+    specialist is one registry entry and zero edits elsewhere.
+  - **One voice.** A realtime session cannot change voice once an agent has spoken, so every agent
+    uses the shared `AGENT_VOICE`.
 
 ```mermaid
 %%{init: {'theme': 'dark'}}%%
 flowchart LR
-    I["Initial Agent"]
-    A1["Capability Bundle 1"]
-    A2["Capability Bundle 2"]
-    A3["Capability Bundle 3"]
+    R["Pulse Assistant<br/>(root)"]
+    S["Stock Analyst"]
+    W["get_weather_for_city"]
+    U1["render_ui"]
+    Q["get_stock_quote"]
+    H["get_stock_history"]
+    N["get_stock_news"]
+    U2["render_ui"]
 
-    T11["Tool 11"]
-    T12["Tool 12"]
-    T21["Tool 21"]
-    T22["Tool 22"]
-    T23["Tool 23"]
-    T31["Tool 31"]
+    R -- "transfer_to_Stock_Analyst" --> S
+    S -- "transfer_to_Pulse_Assistant" --> R
 
-
-    I --> A1
-    I --> A2
-    I --> A3
-
-    A1 --> T11
-    A1 --> T12
-
-    A2 --> T21
-    A2 --> T22
-    A2 --> T23
-
-    A3 --> T31
-
+    R --> W
+    R --> U1
+    S --> Q
+    S --> H
+    S --> N
+    S --> U2
 ```
+
+**Worked example.** Ask "how is Apple doing?" and the root agent, which knows nothing about
+stocks, hands over silently because a transfer tool's description matches. The Stock Analyst
+(`agents/stockAnalyst.ts`) calls `get_stock_quote` — it is told never to quote a number from memory
+— which fetches a typed `TStockReport` through the `actions/getStockReports.ts` server action,
+attaches the quote card built by `lib/spec-builders/stockQuote.ts`, and returns the sentences in
+`lib/stocks/summary.ts`: price and today's move, position in the 52-week range, P/E and dividend
+yield, analyst consensus in words, and the period trend, with unavailable figures declared rather
+than guessed. Asked "should I buy it?", it reasons out loud from exactly those figures, gives a
+clear leaning, and says it is not financial advice. When the subject changes it hands back.
 
 ## Dynamic UI Rendering with json-render
 
@@ -78,7 +93,8 @@ flowchart LR
 - Keeps rendering generic and composable through a shared registry and renderer provider pattern.
 - A vocabulary of domain-neutral blocks (definitions in `lib/json-render/blocks/`, components in
   `components/json-render/blocks/`; `/showcase` renders every one and shows the live count) covers
-  layout, text, metrics, media and interaction. Domain UI
+  layout, text, metrics, charts, narrative notes, media and interaction — 25 blocks in six
+  families. Domain UI
   is a _composition_ of those blocks, never a new component: the weather card is built entirely from
   `CardBlock`, `HeadingBlock`, `MetricBlock`, `GridBlock`, `CarouselBlock` and friends.
 - `lib/json-render/catalog.ts` is the React-free contract shared with the model — `validate()` and
@@ -148,6 +164,15 @@ flowchart LR
   - **Remote MCP tools**. Extremely useful if:
     1. You already have a MCP server for the use case
     2. You have an org wide MCP Gateway for tool-search-tool or governance.
+- The shipped tools and the public APIs behind them (details in [`tools/README.md`](/tools/README.md)):
+  - `get_weather_for_city` — [Open-Meteo](https://open-meteo.com), keyless, fetched from the browser.
+  - `get_stock_quote`, `get_stock_history`, `get_stock_news` — two APIs behind one provider in
+    `lib/stocks/`: **Yahoo Finance** chart and search endpoints (keyless: price, today's move, day
+    and 52-week ranges, daily closes, "apple" → `AAPL`) and **Finnhub** (optional
+    `FINNHUB_API_KEY`: market cap, P/E, EPS, dividend yield, analyst ratings, headlines). Finnhub
+    calls can never fail the report; without a key those fields are simply unavailable. Both need
+    headers a page cannot send, so the tools go through one server action,
+    `actions/getStockReports.ts`, and build the cards client-side from its typed report.
 
 ```mermaid
 %%{init: {'theme': 'dark'}}%%

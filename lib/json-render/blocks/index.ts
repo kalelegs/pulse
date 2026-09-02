@@ -2,6 +2,8 @@ import type { ReactNode } from 'react';
 import type { z } from 'zod';
 import type { BaseComponentProps } from '@json-render/react';
 import { badgeBlockDefinition } from '@/lib/json-render/blocks/BadgeBlock.definition';
+import { barChartBlockDefinition } from '@/lib/json-render/blocks/BarChartBlock.definition';
+import { calloutBlockDefinition } from '@/lib/json-render/blocks/CalloutBlock.definition';
 import { cardBlockDefinition } from '@/lib/json-render/blocks/CardBlock.definition';
 import { carouselBlockDefinition } from '@/lib/json-render/blocks/CarouselBlock.definition';
 import { dividerBlockDefinition } from '@/lib/json-render/blocks/DividerBlock.definition';
@@ -11,15 +13,19 @@ import { iconBlockDefinition } from '@/lib/json-render/blocks/IconBlock.definiti
 import { imageBlockDefinition } from '@/lib/json-render/blocks/ImageBlock.definition';
 import { keyValueBlockDefinition } from '@/lib/json-render/blocks/KeyValueBlock.definition';
 import { labelBlockDefinition } from '@/lib/json-render/blocks/LabelBlock.definition';
+import { lineChartBlockDefinition } from '@/lib/json-render/blocks/LineChartBlock.definition';
 import { linkBlockDefinition } from '@/lib/json-render/blocks/LinkBlock.definition';
 import { listBlockDefinition } from '@/lib/json-render/blocks/ListBlock.definition';
 import { metricBlockDefinition } from '@/lib/json-render/blocks/MetricBlock.definition';
 import { progressBlockDefinition } from '@/lib/json-render/blocks/ProgressBlock.definition';
+import { quoteBlockDefinition } from '@/lib/json-render/blocks/QuoteBlock.definition';
+import { segmentedBarBlockDefinition } from '@/lib/json-render/blocks/SegmentedBarBlock.definition';
 import { stackBlockDefinition } from '@/lib/json-render/blocks/StackBlock.definition';
 import { suggestionChipBlockDefinition } from '@/lib/json-render/blocks/SuggestionChipBlock.definition';
 import { tableBlockDefinition } from '@/lib/json-render/blocks/TableBlock.definition';
 import { textBlockDefinition } from '@/lib/json-render/blocks/TextBlock.definition';
 import { textBubbleBlockDefinition } from '@/lib/json-render/blocks/TextBubbleBlock.definition';
+import { timelineBlockDefinition } from '@/lib/json-render/blocks/TimelineBlock.definition';
 
 /**
  * The single source of truth for the block vocabulary.
@@ -40,6 +46,8 @@ import { textBubbleBlockDefinition } from '@/lib/json-render/blocks/TextBubbleBl
  */
 export const blockDefinitions = {
   BadgeBlock: badgeBlockDefinition,
+  BarChartBlock: barChartBlockDefinition,
+  CalloutBlock: calloutBlockDefinition,
   CardBlock: cardBlockDefinition,
   CarouselBlock: carouselBlockDefinition,
   DividerBlock: dividerBlockDefinition,
@@ -49,15 +57,19 @@ export const blockDefinitions = {
   ImageBlock: imageBlockDefinition,
   KeyValueBlock: keyValueBlockDefinition,
   LabelBlock: labelBlockDefinition,
+  LineChartBlock: lineChartBlockDefinition,
   LinkBlock: linkBlockDefinition,
   ListBlock: listBlockDefinition,
   MetricBlock: metricBlockDefinition,
   ProgressBlock: progressBlockDefinition,
+  QuoteBlock: quoteBlockDefinition,
+  SegmentedBarBlock: segmentedBarBlockDefinition,
   StackBlock: stackBlockDefinition,
   SuggestionChipBlock: suggestionChipBlockDefinition,
   TableBlock: tableBlockDefinition,
   TextBlock: textBlockDefinition,
   TextBubbleBlock: textBubbleBlockDefinition,
+  TimelineBlock: timelineBlockDefinition,
 };
 
 /** Union of every block `type` string an agent may emit. */
@@ -100,4 +112,5 @@ export type TBlockComponents = { [TName in TBlockName]: TBlockComponent<TName> }
 
 export { blockActions } from '@/lib/json-render/blocks/actions';
 export { ICON_NAMES, type TIconName } from '@/lib/json-render/iconNames';
+export { dataToneEnum, type TDataTone } from '@/lib/json-render/blocks/tones';
 export { defineBlock, type TBlockDefinition } from '@/lib/json-render/blocks/defineBlock';

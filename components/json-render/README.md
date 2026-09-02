@@ -41,6 +41,8 @@ components/json-render/                          'use client'
   blocks/
     <Name>.tsx             the React component, typed TBlockComponent<'Name'>
     components.ts          blockComponents registry, typed TBlockComponents
+    dataTones.ts           the one dataToneEnum -> class map every data block uses
+    chartScale.ts / chartFormat.ts / chartParts.tsx   range, unit and legend helpers for charts
   renderer.tsx             JsonRenderer: catalog + blockComponents
   icons.ts                 icon name -> remixicon component map
   BlockIcon.tsx            shared icon renderer
@@ -58,23 +60,16 @@ shadcn or `'use client'` into a server bundle — so the catalog imports only
 `prompt()` and `jsonSchema()` are deliberately unused; `tools/README.md`
 explains why.
 
-That is why each block is two files in two trees. The `.definition.ts` half
-under `lib/` is pure zod and prose; the `.tsx` half under `components/` is JSX.
-Import each from its own file — a `.tsx` never re-exports its definition,
-precisely so that server code cannot reach a definition through a
-`'use client'` module by accident:
-
-```ts
-import { cardBlockDefinition } from '@/lib/json-render/blocks/CardBlock.definition'; // server-safe
-import { CardBlock } from '@/components/json-render/blocks/CardBlock'; // client only
-```
+That is why each block is two files in two trees: the `.definition.ts` half
+under `lib/` is pure zod and prose, the `.tsx` half under `components/` is JSX,
+and a `.tsx` never re-exports its definition, so server code cannot reach one
+through a `'use client'` module by accident.
 
 Each component is annotated `TBlockComponent<'Name'>` and `blocks/components.ts`
-is annotated `TBlockComponents`, an exhaustive map over `keyof blockDefinitions`
-typed from each block's own zod schema. That catches a block registered in one
-map and missing from the other, and a component that _demands_ a prop its
-definition does not declare. It does not catch the opposite — a component that
-ignores `props` assigns cleanly — so consuming what you declare is on review.
+is `TBlockComponents`, an exhaustive map over `keyof blockDefinitions`, so a
+block registered in one map and missing from the other, or a component that
+_demands_ a prop its definition lacks, fails to compile. It cannot catch a
+component that ignores a declared prop — consuming what you declare is on review.
 
 ## Adding a new block
 
@@ -104,41 +99,49 @@ ignores `props` assigns cleanly — so consuming what you declare is on review.
    export const MyBlock: TBlockComponent<'MyBlock'> = ({ props, loading }) => ...;
    ```
 
-   Honour `loading` with a `Skeleton` where it means something. Use `on('press')`
-   / `emit('press')` for interactivity, and `<BlockIcon />` for icons. Do **not**
-   re-export the definition from here — that would let server code pull a
-   `'use client'` module in with no compile error.
+   Honour `loading` with a `Skeleton`, use `<BlockIcon />` for icons, resolve any
+   `dataToneEnum` prop through `dataTones.ts`, and do **not** re-export the
+   definition from here (see above).
 
 3. Add one line to `lib/json-render/blocks/index.ts` (`MyBlock: myBlockDefinition`)
    and one line to `components/json-render/blocks/components.ts` (`MyBlock`).
 
 Nothing else changes — the catalog, `render_ui`'s vocabulary, the renderer and
-the builder all pick it up. Add it to `app/showcase/showcaseSections.ts` so it
-stays visually covered.
+the builder all pick it up. Add it to `app/showcase/showcaseSections.ts` (or
+`showcaseDataSections.ts` for charts and narrative) so it stays visually covered.
 
 ## Block vocabulary
 
-| Block                 | Slots   | Use for                                      |
-| --------------------- | ------- | -------------------------------------------- |
-| `StackBlock`          | default | row/column flow — the default container      |
-| `GridBlock`           | default | evenly sized tiles                           |
-| `DividerBlock`        | —       | section rule, optional label                 |
-| `CardBlock`           | default | bordered surface with title/description/icon |
-| `CarouselBlock`       | default | horizontal snap strip                        |
-| `ListBlock`           | default | bulleted or numbered list                    |
-| `HeadingBlock`        | —       | section title + subtitle                     |
-| `TextBlock`           | —       | paragraph prose                              |
-| `TextBubbleBlock`     | —       | chat-transcript bubble                       |
-| `LabelBlock`          | —       | short caption / field label                  |
-| `MetricBlock`         | —       | headline number + unit + delta/trend         |
-| `KeyValueBlock`       | —       | one labelled fact                            |
-| `ProgressBlock`       | —       | 0–100 level bar                              |
-| `TableBlock`          | —       | small tabular data                           |
-| `BadgeBlock`          | —       | static status pill                           |
-| `SuggestionChipBlock` | —       | pressable follow-up                          |
-| `IconBlock`           | —       | standalone pictogram                         |
-| `ImageBlock`          | —       | remote image + caption                       |
-| `LinkBlock`           | —       | external hyperlink                           |
+25 blocks in six families: layout, text, numbers, charts, narrative, and
+media/interaction. Charts are inline SVG or plain divs, no library.
+
+| Block                 | Slots   | Use for                                       |
+| --------------------- | ------- | --------------------------------------------- |
+| `StackBlock`          | default | row/column flow — the default container       |
+| `GridBlock`           | default | evenly sized tiles                            |
+| `DividerBlock`        | —       | section rule, optional label                  |
+| `CardBlock`           | default | bordered surface with title/description/icon  |
+| `CarouselBlock`       | default | horizontal snap strip                         |
+| `ListBlock`           | default | bulleted or numbered list                     |
+| `HeadingBlock`        | —       | section title + subtitle                      |
+| `TextBlock`           | —       | paragraph prose                               |
+| `TextBubbleBlock`     | —       | chat-transcript bubble                        |
+| `LabelBlock`          | —       | short caption / field label                   |
+| `MetricBlock`         | —       | headline number + unit + delta/trend          |
+| `KeyValueBlock`       | —       | one labelled fact                             |
+| `ProgressBlock`       | —       | 0–100 level bar                               |
+| `TableBlock`          | —       | small tabular data                            |
+| `LineChartBlock`      | —       | trend of one or more series; `sm` = sparkline |
+| `BarChartBlock`       | —       | a few categories on one measure               |
+| `SegmentedBarBlock`   | —       | how one whole splits into parts               |
+| `CalloutBlock`        | —       | tinted caveat / tip / warning                 |
+| `TimelineBlock`       | —       | dated entries down a vertical rail            |
+| `QuoteBlock`          | —       | attributed excerpt with source link           |
+| `BadgeBlock`          | —       | static status pill                            |
+| `SuggestionChipBlock` | —       | pressable follow-up                           |
+| `IconBlock`           | —       | standalone pictogram                          |
+| `ImageBlock`          | —       | remote image + caption                        |
+| `LinkBlock`           | —       | external hyperlink                            |
 
 Actions: `suggest` (`{ text, value }`) and `select` (`{ value, label }`), plus the
 runtime built-ins `setState` / `pushState` / `removeState` / `validateForm` from
@@ -190,9 +193,7 @@ Guarantees:
 
 ## Building specs by hand
 
-`lib/spec-builders/` provides `block()`, `bind()` and `buildSpec()` — the
-primary path for shipping UI: a tool builds its card in TypeScript, so the spec
-is complete and schema-valid the moment the tool resolves. Props and action
-params are type-checked against the catalog and element keys are generated. See
-`lib/spec-builders/weather.ts` (a domain card from generic blocks) and
-`app/showcase/showcaseSpec.ts` (every block, for the visual smoke test).
+`lib/spec-builders/` provides `block()`, `bind()` and `buildSpec()`: a tool
+builds its card in TypeScript, props and action params type-checked against the
+catalog and element keys generated, so the spec is schema-valid the moment the
+tool resolves. See `lib/spec-builders/weather.ts` and `app/showcase/showcaseSpec.ts`.

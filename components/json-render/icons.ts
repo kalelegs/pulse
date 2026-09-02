@@ -1,5 +1,14 @@
 import {
   RiAlertLine,
+  RiArrowRightDownLine,
+  RiArrowRightUpLine,
+  RiBriefcaseLine,
+  RiBuilding2Line,
+  RiMoneyDollarCircleLine,
+  RiNewspaperLine,
+  RiPercentLine,
+  RiScalesLine,
+  RiStockLine,
   RiArrowDownLine,
   RiArrowRightLine,
   RiArrowUpLine,
@@ -120,6 +129,15 @@ export const ICON_COMPONENTS: Record<TIconName, RemixiconComponentType> = {
   fire: RiFireLine,
   leaf: RiLeafLine,
   home: RiHome5Line,
+  'trending-up': RiArrowRightUpLine,
+  'trending-down': RiArrowRightDownLine,
+  stock: RiStockLine,
+  dollar: RiMoneyDollarCircleLine,
+  percent: RiPercentLine,
+  news: RiNewspaperLine,
+  building: RiBuilding2Line,
+  briefcase: RiBriefcaseLine,
+  scales: RiScalesLine,
 };
 
 /** Resolve an agent-supplied icon name, returning null when it is unknown. */

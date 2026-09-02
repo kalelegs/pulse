@@ -9,14 +9,37 @@ call.
 
 ```
 tools/
-  index.ts             the registry — agents import `agentTools` from here
+  index.ts             the registry — one named tool set per agent
   weather.ts           get_weather_for_city  (typed experience)
+  stockQuote.ts        get_stock_quote       (typed experience: quote or comparison card)
+  stockHistory.ts      get_stock_history     (typed experience: chart card)
+  stockNews.ts         get_stock_news        (typed experience: timeline card)
+  stockReports.ts      calls the stock server action and splits its results
   renderUi.ts          render_ui             (model-authored experience)
   attachSpec.ts        puts a spec on the assistant's reply bubble
   catalogReference.ts  compact block vocabulary for render_ui's description
   specSchema.ts        strict-mode-safe parameters for a model-authored spec
   specChecks.ts        per-block props + action binding checks for that spec
 ```
+
+## Per-agent tool sets
+
+`index.ts` exports one array per agent — `assistantTools` (weather +
+`render_ui`) and `stockAnalystTools` (the three stock tools + `render_ui`) —
+each passed through the same `enabled()` filter, so a global switch such as
+`ENABLE_GENERATIVE_UI_TOOL` applies everywhere at once. A realtime session only
+carries the _current_ agent's tools, so a set is also that agent's tool budget:
+the root agent never pays for the stock tools, and `render_ui` is in every set
+because its cost is worth paying wherever a custom panel may be needed.
+
+## Tools that need the server
+
+Tools run in the browser, but the stock tools cannot fetch their data there:
+Yahoo Finance wants a browser-like `User-Agent` a page cannot set, and Finnhub
+wants a key that must never reach the client. They call the
+`actions/getStockReports.ts` server action instead, which runs `lib/stocks`
+on the server and returns typed `TStockResult`s. The tool is still the one that
+builds the spec, attaches it and returns the summary — only the fetch moved.
 
 ## The contract: speak a summary, render a spec
 
@@ -112,12 +135,14 @@ spec, so the last to resolve wins and the overwrite is logged with
    export default myTool;
    ```
 
-2. Add one line to `tools/index.ts`. That is the whole registration — agents
-   already consume `agentTools`.
+2. Add one line to the right set in `tools/index.ts`. That is the whole
+   registration — the agent already consumes its set.
 
 Keep the data layer out of the tool. `tools/weather.ts` is ~55 lines because
 fetching lives in `lib/weather/` behind `TWeatherProvider` and the card lives in
-`lib/spec-builders/weather.ts`; the tool only wires the three together.
+`lib/spec-builders/weather.ts`; the tool only wires the three together. The
+stock tools follow the same split with `lib/stocks/` and
+`lib/spec-builders/stock*.ts`, plus `tools/stockReports.ts` for the server hop.
 
 ## `render_ui`, the escape hatch
 

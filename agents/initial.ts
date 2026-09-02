@@ -3,18 +3,14 @@
 import { RealtimeAgent } from '@openai/agents/realtime';
 import { RECOMMENDED_PROMPT_PREFIX } from '@openai/agents-core/extensions';
 import { RunContext } from '@openai/agents';
-import { EVoice } from '@/lib/realtimeConfig';
-import { agentTools } from '@/tools';
+import {
+  AGENT_VOICE,
+  HANDOFF_LINES,
+  preferenceLines,
+  SCREEN_AWARENESS_LINES,
+} from '@/agents/shared';
+import { assistantTools } from '@/tools';
 import { TSessionContext } from '@/types';
-
-/** The session's preference list as prompt lines, or no lines at all when it is empty. */
-const preferenceLines = (preferences: string[]): string[] =>
-  preferences.length
-    ? [
-        'Things this user has told us they prefer — honour them without being asked:',
-        ...preferences.map((preference) => `- ${preference}`),
-      ]
-    : [];
 
 /**
  * Builds the agent's system instructions for one run.
@@ -25,6 +21,11 @@ const preferenceLines = (preferences: string[]): string[] =>
  * lives in the `render_ui` tool's own description, not here — this prompt only
  * has to teach *when* to reach for a visual answer, which is a few hundred
  * characters. See `tools/catalogReference.ts` for the measurements.
+ *
+ * The same economy applies to handoffs: this prompt names no specialist. The
+ * SDK builds a `transfer_to_<name>` tool for every agent in `handoffs`, each
+ * described by that agent's `handoffDescription`, so `HANDOFF_LINES` only has
+ * to say that such tools exist. See `agents/index.ts` for the wiring.
  *
  * Assembled from an array of lines rather than a template literal so that
  * source indentation never becomes part of the prompt.
@@ -41,23 +42,25 @@ const buildInstructions = (runContext: RunContext<TSessionContext>): string =>
     '',
     'You are talking out loud, so keep every reply to one or two short sentences.',
     '',
-    'Screen awareness:',
-    '- The conversation has a screen next to it, and some of your tools draw on it.',
-    '- When a tool tells you it has rendered something, that thing is already visible.',
-    '  Say one short sentence about it and move on. Never read a rendered panel out',
-    '  field by field, and never spell out numbers, lists or tables the user can see.',
-    '- Reach for "render_ui" when a spoken answer would be hard to follow: comparisons,',
-    '  three or more options, step-by-step instructions, or several figures at once.',
-    '  Skip it for short factual answers.',
+    ...SCREEN_AWARENESS_LINES,
     '',
-    'If you decide to make a tool call, announce it in a few words before you make it.',
+    ...HANDOFF_LINES,
+    '',
+    'If you decide to call a tool other than a transfer, announce it in a few words first.',
   ].join('\n');
 
+/**
+ * The root agent: the one a session starts on and the one specialists hand
+ * back to. Its `handoffs` are filled in by `agents/index.ts`, never here, so
+ * this module stays free of any reference to the specialists.
+ */
 const initialAgent = new RealtimeAgent<TSessionContext>({
   name: 'Pulse Assistant',
-  voice: EVoice.ECHO,
+  voice: AGENT_VOICE,
+  handoffDescription:
+    'General assistant: weather, small talk, and anything not covered by a specialist.',
   instructions: buildInstructions,
-  tools: agentTools,
+  tools: assistantTools,
 });
 
 export default initialAgent;

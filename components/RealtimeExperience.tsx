@@ -11,7 +11,12 @@ import {
   chatMessageSink,
 } from '@/hooks';
 import SettingsPanel from '@/components/SettingsPanel';
-import { createSpecActionHandler, MessageList } from '@/components/Chat';
+import {
+  ChatComposer,
+  createSpecActionHandler,
+  createUserTextSender,
+  MessageList,
+} from '@/components/Chat';
 import { createMessageExtractor } from '@/lib/EventProcessor';
 import { logTransportEvent } from '@/lib/events/logTransportEvent';
 
@@ -71,7 +76,13 @@ const RealtimeExperience = () => {
     onHistoryUpdated: setSdkHistory,
   });
 
-  const specActionHandler = useMemo(() => createSpecActionHandler(sendMessage), [sendMessage]);
+  // One sender for every piece of app-originated user text — chips and the composer — so both
+  // echo into the transcript the same way and draw ids from the same counter.
+  const sendUserText = useMemo(() => createUserTextSender(sendMessage), [sendMessage]);
+  const specActionHandler = useMemo(
+    () => createSpecActionHandler((text) => sendUserText(text, 'suggestion')),
+    [sendUserText],
+  );
   // The transcript stays on screen after a disconnect (`reset()` runs on *connect*), so its chips
   // stay clickable long after there is anything to send them to. Dropping the handler makes them
   // inert rather than letting them fire into a closed session.
@@ -107,8 +118,13 @@ const RealtimeExperience = () => {
       </section>
 
       <div className="flex min-h-0 flex-1 flex-col gap-4 lg:flex-row">
-        <section className="min-h-0 overflow-auto rounded-md border px-6 py-4 lg:flex-10">
-          <MessageList onSpecAction={handleSpecAction} />
+        <section className="flex min-h-0 flex-col overflow-hidden rounded-md border px-6 py-4 lg:flex-10">
+          {/* The inner div is the scroller `useAutoScroll` walks up to; the composer sits outside
+              it so the transcript scrolls underneath a pinned input. */}
+          <div className="min-h-0 flex-1 overflow-auto">
+            <MessageList onSpecAction={handleSpecAction} />
+          </div>
+          <ChatComposer onSend={(text) => sendUserText(text, 'typed')} disabled={!isConnected} />
         </section>
         <EventsPanel isConnected={isConnected} />
       </div>

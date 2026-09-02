@@ -73,9 +73,8 @@ including when the next `started` arrives with the previous one still open.
 Deltas are only ever additive, so the `.done` payload wins over the accumulated deltas — a lost or
 duplicated delta cannot corrupt a finalised message. Finalised item ids are sealed, so a repeated
 `.done`, or a late delta, is ignored. A `.done` for an item that never became active still produces
-a message (its payload carries the whole text), and a turn that produced no text at all is
-discarded instead of rendered as an empty bubble. Because a tool call splits an assistant turn
-into two items, one turn can produce two bubbles — matching what the user actually hears.
+a message (its payload carries the whole text); a turn with no text at all is discarded, not shown
+as an empty bubble. A tool call splits a turn into two items, so one turn can produce two bubbles.
 
 ### User
 
@@ -94,10 +93,9 @@ so appending on `completed` would put the user's bubble below the reply. Instead
 
 `pending` is the stage on `TMessage`, and it is what `UserMessage` renders its cue from. Emptiness
 cannot stand in for it: a half-transcribed bubble has text and is still arriving, and a resolved one
-may legitimately hold the placeholder. Its states are listening bars (`ListeningIndicator`) while
-the microphone is still capturing, "Transcribing" plus dots once the audio is committed, partial
-text plus dots, and text alone — one dots element from commit onwards, so the first word neither
-restarts the animation nor moves the bubble.
+may hold the placeholder. Its states are listening bars (`ListeningIndicator`) while the microphone
+is still capturing, "Transcribing" plus dots once the audio is committed, partial text plus dots,
+and text alone — one dots element from commit on, so the first word does not move the bubble.
 
 A reserved slot must always resolve, because an unresolved one shows a streaming cue forever. The
 ways a slot can be left hanging, and what closes each:
@@ -116,22 +114,21 @@ well have replied to it.
 The bubble appears the moment the user starts talking — `speech_started` already carries the
 `item_id` the turn will become — but its _text_ cannot arrive before the end of the utterance:
 transcription starts on `input_audio_buffer.committed`, which _is_ end-of-speech, and how long the
-server takes to decide that is turn detection's call (the SDK defaults to `semantic_vad`). What
-the deltas buy is a bubble that fills in progressively instead of in one jump — for a short
-sentence that can be a single frame. The model is pinned rather than inherited (`TRANSCRIPTION_MODEL` in `lib/realtimeConfig.ts`)
-so it cannot silently become one that returns the whole transcript at once.
+server takes to decide that is turn detection's call (the SDK defaults to `semantic_vad`). The
+deltas buy a bubble that fills in progressively instead of in one jump — for a short sentence that
+can be a single frame. The model is pinned rather than inherited (`TRANSCRIPTION_MODEL` in
+`lib/realtimeConfig.ts`) so it cannot silently become one that returns the whole transcript at once.
 
 Text turns injected by the app (`session.sendMessage`, e.g. the hidden greeting prompt on connect)
-are intentionally **not** rendered — they are instructions to the model, not user speech. The one
-exception is a tapped suggestion chip, which echoes itself into the transcript; see below.
+are intentionally **not** rendered — they are instructions to the model, not user speech. Text the
+user authored (typed, or a tapped chip) echoes itself instead; see "Typed and suggested text".
 
 ### Interruption / barge-in
 
-`input_audio_buffer.speech_started` is the user starting to talk, and the only event that starts the
-speech clock. `conversation.item.truncated` is the server acknowledging that the _assistant's_
+`input_audio_buffer.speech_started` is the user starting to talk, and the only event that starts
+the speech clock. `conversation.item.truncated` is the server acknowledging that the _assistant's_
 audio was cut (payload: `item_id`, `audio_end_ms`, `content_index`); it also counts as an
-interruption but must not touch the clock, or every user duration is understated by the barge-in
-latency.
+interruption but must not touch the clock, or every user duration is understated by the latency.
 
 While an assistant message is streaming:
 
@@ -152,45 +149,48 @@ While an assistant message is streaming:
 
 `messageExtractor.reset()` runs from `useSession`'s `onDisconnect`: it finalises the half-spoken
 reply as heard (rather than stranding it in `activeMessage` behind a permanent typing indicator)
-and drops the per-session maps that would otherwise grow for the lifetime of the tab.
-
-`onConnect` runs it again, then clears the transcript with `useChatStore.reset()`: a realtime
-session starts with no server-side history, so **each connect starts a fresh transcript** — the old
-one would show the model remembering things it was never told. Clearing on connect rather than on
-disconnect keeps a hung-up conversation readable until the next one begins.
+and drops the per-session maps that would otherwise grow for the lifetime of the tab. `onConnect`
+runs it again, then clears the transcript with `useChatStore.reset()`: a realtime session starts
+with no server-side history, so **each connect starts a fresh transcript** — the old one would show
+the model remembering things it was never told. Clearing on connect rather than on disconnect
+keeps a hung-up conversation readable until the next one begins.
 
 `reset()` also increments `sessionEpoch`. That counter, not an empty transcript, is what work
-outliving a single event checks to decide the session changed: a user slot can be retracted down to
-an empty transcript in a perfectly live session (a cough, a slammed door), so emptiness proves
-nothing. `tools/attachSpec` captures the epoch and gives up the moment it moves.
-
-Because the transcript survives a disconnect, its interactive parts must not. `RealtimeExperience`
-drops `onSpecAction` while disconnected, so suggestion chips on the old transcript are inert rather
-than firing into a closed session.
+outliving a single event checks to decide the session changed: a live session can be retracted to
+an empty transcript (a cough, a slammed door). `tools/attachSpec` gives up the moment it moves.
 
 ## Generative UI
 
 `TMessage.spec` carries an optional `TJsonRenderSpec`. `useChatStore.attachSpecToMessage(spec, id?)`
 attaches one; omitting `id` targets `activeMessage` — the entry point for an agent tool emitting a
 spec mid-turn. Because finalisation copies the store's active message, such a spec survives it.
+`AssistantMessage` renders it through `JsonRenderSurface` and does **not** pass `loading`: specs
+are never streamed, so one is complete the moment it arrives. Passing the transcript's streaming
+flag showed a finished card as skeleton bars for the rest of the spoken reply.
 
-`AssistantMessage` renders the spec through `JsonRenderSurface` and does **not** pass `loading`:
-specs are never streamed, so one is complete the moment it arrives. Passing the transcript's
-streaming flag showed a finished card as skeleton bars for the rest of the spoken reply.
+`onAction` is wired in `./specActions.ts`: `suggest` hands the chip's `text` to `sendUserText`
+(below); `select` is a documented no-op — no shipped block binds it and there is no form state.
 
-`onAction` is wired in `./specActions.ts`. `suggest` sends the chip's `text` to the agent as a user
-turn and, **once the send has succeeded**, echoes it into the transcript as a user bubble —
-`sendMessage` injects a conversation item the extractor deliberately does not render, so without
-the echo the reply would appear with nothing prompting it. `sendMessage` returns `false` when there
-is no live session; echoing before checking would show the user saying something the model has no
-record of, with no reply ever coming. `select` is a documented no-op: no shipped block binds it and
-there is no form state for a choice to land in.
+## Typed and suggested text
+
+`ChatComposer` (a single-line input pinned under the transcript) and suggestion chips are the two
+ways the user authors text rather than speech, and they share one path: `createUserTextSender`
+(`./sendUserText.ts`), built once in `RealtimeExperience` from `useSession`'s `sendMessage`. It
+sends the text as a user turn and, **once the send has succeeded**, echoes it into the transcript
+(ids `typed-N` / `suggestion-N`, one counter) — `sendMessage` injects a conversation item the
+extractor does not render, so without the echo the reply would appear with nothing prompting it;
+and it returns `false` with no live session, so echoing first would show the user saying something
+the model has no record of. The composer clears its draft only on a successful send, so text typed
+with nothing connected is kept. Because the transcript survives a disconnect, its interactive parts
+must not: the composer is disabled ("Connect to start typing") and `RealtimeExperience` drops
+`onSpecAction`, so old chips are inert rather than firing into a closed session.
 
 ## Scrolling
 
-`MessageList` sticks to the bottom through `hooks/useAutoScroll`, which finds the scroller in the
-DOM and stops following as soon as the user scrolls away. Why growth is detected with a
-`ResizeObserver` rather than a render-derived signal is explained on the hook itself.
+`MessageList` sticks to the bottom through `hooks/useAutoScroll`, which finds the scroller (the
+`overflow-auto` div above the composer in `RealtimeExperience`) in the DOM and stops following as
+soon as the user scrolls away. Why growth is detected with a `ResizeObserver` rather than a
+render-derived signal is explained on the hook itself.
 
 ## Announcements
 

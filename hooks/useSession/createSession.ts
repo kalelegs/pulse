@@ -1,5 +1,5 @@
 import { getEphemeralToken } from '@/actions/getEphemeralToken';
-import initialAgent from '@/agents/initial';
+import { rootAgent } from '@/agents';
 import {
   OpenAIRealtimeWebRTC,
   RealtimeItem,
@@ -58,7 +58,7 @@ export const createSession = async (
   try {
     const apiKey = await getEphemeralToken();
 
-    const nextSession = new RealtimeSession<TSessionContext>(initialAgent, {
+    const nextSession = new RealtimeSession<TSessionContext>(rootAgent, {
       model: REALTIME_MODEL,
       transport: new OpenAIRealtimeWebRTC({ ...(audioElement && { audioElement }), mediaStream }),
       context: options.context,

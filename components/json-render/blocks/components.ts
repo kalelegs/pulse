@@ -1,6 +1,8 @@
 'use client';
 
 import { BadgeBlock } from '@/components/json-render/blocks/BadgeBlock';
+import { BarChartBlock } from '@/components/json-render/blocks/BarChartBlock';
+import { CalloutBlock } from '@/components/json-render/blocks/CalloutBlock';
 import { CardBlock } from '@/components/json-render/blocks/CardBlock';
 import { CarouselBlock } from '@/components/json-render/blocks/CarouselBlock';
 import { DividerBlock } from '@/components/json-render/blocks/DividerBlock';
@@ -10,15 +12,19 @@ import { IconBlock } from '@/components/json-render/blocks/IconBlock';
 import { ImageBlock } from '@/components/json-render/blocks/ImageBlock';
 import { KeyValueBlock } from '@/components/json-render/blocks/KeyValueBlock';
 import { LabelBlock } from '@/components/json-render/blocks/LabelBlock';
+import { LineChartBlock } from '@/components/json-render/blocks/LineChartBlock';
 import { LinkBlock } from '@/components/json-render/blocks/LinkBlock';
 import { ListBlock } from '@/components/json-render/blocks/ListBlock';
 import { MetricBlock } from '@/components/json-render/blocks/MetricBlock';
 import { ProgressBlock } from '@/components/json-render/blocks/ProgressBlock';
+import { QuoteBlock } from '@/components/json-render/blocks/QuoteBlock';
+import { SegmentedBarBlock } from '@/components/json-render/blocks/SegmentedBarBlock';
 import { StackBlock } from '@/components/json-render/blocks/StackBlock';
 import { SuggestionChipBlock } from '@/components/json-render/blocks/SuggestionChipBlock';
 import { TableBlock } from '@/components/json-render/blocks/TableBlock';
 import { TextBlock } from '@/components/json-render/blocks/TextBlock';
 import { TextBubbleBlock } from '@/components/json-render/blocks/TextBubbleBlock';
+import { TimelineBlock } from '@/components/json-render/blocks/TimelineBlock';
 import type { TBlockComponents } from '@/lib/json-render/blocks';
 
 /**
@@ -35,6 +41,8 @@ import type { TBlockComponents } from '@/lib/json-render/blocks';
  */
 export const blockComponents: TBlockComponents = {
   BadgeBlock,
+  BarChartBlock,
+  CalloutBlock,
   CardBlock,
   CarouselBlock,
   DividerBlock,
@@ -44,13 +52,17 @@ export const blockComponents: TBlockComponents = {
   ImageBlock,
   KeyValueBlock,
   LabelBlock,
+  LineChartBlock,
   LinkBlock,
   ListBlock,
   MetricBlock,
   ProgressBlock,
+  QuoteBlock,
+  SegmentedBarBlock,
   StackBlock,
   SuggestionChipBlock,
   TableBlock,
   TextBlock,
   TextBubbleBlock,
+  TimelineBlock,
 };
