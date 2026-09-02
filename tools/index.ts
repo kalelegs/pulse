@@ -24,7 +24,7 @@ import getWeather from '@/tools/weather';
  * and carries the whole block vocabulary in its description (~15 KB, ~3.7k
  * tokens, paid on every connect). `none` runs with the typed experiences only.
  */
-const GENERATIVE_UI_TOOL: 'design_ui' | 'render_ui' | 'none' = 'design_ui';
+const GENERATIVE_UI_TOOL: 'design_ui' | 'render_ui' | 'none' = 'render_ui';
 
 const generativeUiTools: Tool[] = { design_ui: [designUi], render_ui: [renderUi], none: [] }[
   GENERATIVE_UI_TOOL

@@ -111,9 +111,9 @@ For a realtime **voice** agent this is the right trade:
 - **Always valid.** A spec that compiles cannot violate the catalog schema.
 - **Unhallucinable.** The model cannot invent a broken layout mid-sentence.
 
-**`design_ui` — generative UI by delegation, the default.** The realtime model sends a brief and
+**`design_ui` — generative UI by delegation, opt in.** The realtime model sends a brief and
 a server-side text agent (`agents/uiDesigner.ts`, model `UI_DESIGN_MODEL`) composes and validates
-the spec: the model best at layout does the layout, and the session never carries the vocabulary.
+the spec: the model best at layout does the layout, and the session never carries the vocabulary. Off by default: a 9–18 s round trip is too long a pause for voice.
 
 **`render_ui` — the escape hatch.** For open-ended requests the typed builders do not cover, the
 agent emits its own spec as tool arguments, choosing from 29 domain-neutral blocks with a short

@@ -13,8 +13,8 @@ tools/
   stockHistory.ts      get_stock_history     (typed experience: chart card)
   stockNews.ts         get_stock_news        (typed experience: timeline card)
   stockReports.ts      calls the stock server action and splits its results
-  designUi.ts          design_ui             (brief → server-side UI designer agent; the default)
-  renderUi.ts          render_ui             (model-authored spec; opt in via GENERATIVE_UI_TOOL)
+  renderUi.ts          render_ui             (model-authored spec; the default)
+  designUi.ts          design_ui             (brief → server-side UI designer agent; opt in)
   attachSpec.ts        puts a spec on the assistant's reply bubble
   specSchema.ts        strict-mode-safe parameters for a model-authored spec; thin adapter
                        over lib/json-render/validateSpec.ts, which does the checking
@@ -141,12 +141,12 @@ stock tools follow the same split with `lib/stocks/` and
 
 ## `design_ui`, generative UI by delegation
 
-The default. The realtime model writes a plain-words brief and `actions/designUi.ts` runs
+Opt in via `GENERATIVE_UI_TOOL`. The realtime model writes a plain-words brief and `actions/designUi.ts` runs
 `agents/uiDesigner.ts`, a text model (`UI_DESIGN_MODEL`, else the SDK default) that composes the
 spec against the same catalog reference and guide, validates it (`lib/json-render/validateSpec.ts`),
 corrects once on rejection, and returns it for `attachSpecToReply`. The session carries a few
 hundred characters instead of the vocabulary; the trade is one extra model round trip of several
-seconds. `GENERATIVE_UI_TOOL` in `tools/index.ts` switches to `render_ui` or to none.
+seconds — 9 s clean, 15–18 s with a correction round, which is why `render_ui` stays the default.
 
 ## `render_ui`, the escape hatch
 
