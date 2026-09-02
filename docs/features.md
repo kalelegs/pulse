@@ -154,8 +154,8 @@ flowchart LR
 
 ## Tool Calling
 
-- Tool calls allow the assistant to fetch external data and return grounded responses.
-- This is where it gets insanely powerful. This architecture showcases two types of tool calling
+- Tool calls let the assistant fetch external data and ground its answers. This architecture
+  showcases two types of tool calling
   - **Local functional tools**:
     1. Executes on client
     2. Can interact with any existing functionality in your client bundle
@@ -195,6 +195,5 @@ flowchart TB
 
 ## Realtime Events Panel for Debugging
 
-- Includes a dedicated realtime events panel in the experience UI.
-- Designed to surface transport/session activity for easier debugging and observability.
+- A dedicated realtime events panel surfaces transport/session activity for debugging and observability.
 - Helps inspect realtime behavior while developing and tuning agent experiences.
