@@ -37,14 +37,15 @@ message per conversation item, keyed by the transport `item_id`.
 
 ### Assistant
 
-| Event                                                                   | Effect                                                       |
-| ----------------------------------------------------------------------- | ------------------------------------------------------------ |
-| `response.created`                                                      | starts the turn clock                                        |
-| `response.output_item.added` (`item.type === 'message'`)                | `setActiveMessage` — empty bubble with a typing indicator    |
-| `response.output_audio_transcript.delta` / `response.output_text.delta` | `appendContentToActiveMessage`, records `duration.textStart` |
-| `output_audio_buffer.started` / `.stopped`                              | records `duration.audioStart` / `audioEnd`                   |
-| `response.output_audio_transcript.done` / `response.output_text.done`   | finalises with the authoritative full transcript             |
-| `response.done`                                                         | finalises anything still streaming; resolves a barge-in      |
+| Event                                                                                              | Effect                                                                            |
+| -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `response.created`                                                                                 | starts the turn clock                                                             |
+| `response.output_item.added` (`item.type === 'message'`)                                           | `setActiveMessage` — empty bubble with a typing indicator                         |
+| `response.output_audio_transcript.delta` / `response.output_text.delta`                            | `appendContentToActiveMessage`, records `duration.textStart`                      |
+| `output_audio_buffer.started` / `.stopped`                                                         | records `duration.audioStart` / `audioEnd`                                        |
+| `response.output_audio_transcript.done` / `response.output_text.done`                              | finalises with the authoritative full transcript                                  |
+| `response.done`                                                                                    | finalises anything still streaming; resolves a barge-in                           |
+| `response.output_item.done` (`function_call`) … `conversation.item.added` (`function_call_output`) | `setPendingToolName` — a "Running …" row while the tool executes (`toolCalls.ts`) |
 
 `response.created` also stamps the response id every item that follows belongs to
 (`lib/EventProcessor/responseTracker.ts`). A tool call ends one response and the submitted output
@@ -108,8 +109,7 @@ ways a slot can be left hanging, and what closes each:
   **not** clear it: three words then silence is as unfilled as nothing, and only the timeout notices.
 - **a disconnect mid-transcription** — `reset()` resolves everything still open before its timers go.
 
-`failed` keeps the placeholder rather than retracting: there _was_ speech, and the assistant may
-well have replied to it.
+`failed` keeps the placeholder rather than retracting: there _was_ speech the assistant may have answered.
 
 The bubble appears the moment the user starts talking — `speech_started` already carries the
 `item_id` the turn will become — but its _text_ cannot arrive before the end of the utterance:

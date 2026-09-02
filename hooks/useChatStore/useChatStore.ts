@@ -46,6 +46,8 @@ export const useChatStore = create<TChatStore>((set) => ({
   activeMessage: undefined,
   sessionEpoch: 0,
   responseId: undefined,
+  pendingToolName: undefined,
+  setPendingToolName: (pendingToolName) => set(() => ({ pendingToolName })),
   setResponseId: (responseId) =>
     set(() => ({
       responseId,
@@ -86,6 +88,7 @@ export const useChatStore = create<TChatStore>((set) => ({
       finalisedMessages: [],
       activeMessage: undefined,
       responseId: undefined,
+      pendingToolName: undefined,
       // Bumped in the same `set` as the emptying, so a subscriber sees "empty *and* a new epoch"
       // in one notification and can never mistake a mid-session retraction for a new session.
       sessionEpoch: state.sessionEpoch + 1,
@@ -106,4 +109,5 @@ export const chatMessageSink: TMessageSink = {
     useChatStore.getState().finalisedMessages.find((message) => message.id === messageId),
   removeFinalisedMessage: (messageId) => useChatStore.getState().removeFinalisedMessage(messageId),
   setResponseId: (responseId) => useChatStore.getState().setResponseId(responseId),
+  setPendingToolName: (toolName) => useChatStore.getState().setPendingToolName(toolName),
 };

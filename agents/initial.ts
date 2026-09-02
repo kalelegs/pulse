@@ -7,7 +7,9 @@ import {
   AGENT_VOICE,
   HANDOFF_LINES,
   preferenceLines,
+  replyStyleLine,
   SCREEN_AWARENESS_LINES,
+  toolCallLine,
 } from '@/agents/shared';
 import { assistantTools } from '@/tools';
 import { TSessionContext } from '@/types';
@@ -40,13 +42,13 @@ const buildInstructions = (runContext: RunContext<TSessionContext>): string =>
     'default to Fahrenheit, miles and US date order unless they ask otherwise.',
     ...preferenceLines(runContext.context.preferences),
     '',
-    'You are talking out loud, so keep every reply to one or two short sentences.',
+    replyStyleLine(runContext.context.mode),
     '',
     ...SCREEN_AWARENESS_LINES,
     '',
     ...HANDOFF_LINES,
     '',
-    'If you decide to call a tool other than a transfer, announce it in a few words first.',
+    toolCallLine(runContext.context.mode),
   ].join('\n');
 
 /**

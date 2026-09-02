@@ -3,6 +3,7 @@
 import { memo } from 'react';
 import { RiArrowDownLine, RiChat3Line } from '@remixicon/react';
 import AssistantMessage from './AssistantMessage';
+import PendingToolRow from './PendingToolRow';
 import UserMessage from './UserMessage';
 import type { TSpecActionHandler } from './specActions';
 import { useAutoScroll } from '@/hooks';
@@ -58,6 +59,7 @@ type TMessageListProps = {
 const MessageList = ({ onSpecAction }: TMessageListProps) => {
   const finalisedMessages = useChatStore((state) => state.finalisedMessages);
   const activeMessage = useChatStore((state) => state.activeMessage);
+  const pendingToolName = useChatStore((state) => state.pendingToolName);
   const { listRef, isPinned, scrollToBottom } = useAutoScroll();
   const hasMessages = finalisedMessages.length > 0 || Boolean(activeMessage);
 
@@ -70,6 +72,7 @@ const MessageList = ({ onSpecAction }: TMessageListProps) => {
       {activeMessage ? (
         <MessageRow message={activeMessage} isStreaming onSpecAction={onSpecAction} />
       ) : null}
+      {pendingToolName && !activeMessage ? <PendingToolRow toolName={pendingToolName} /> : null}
       {hasMessages && !isPinned ? (
         <div className="pointer-events-none sticky bottom-0 flex justify-center pt-2">
           <Button

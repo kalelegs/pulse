@@ -20,14 +20,18 @@ export type TRealtimeUserInput =
       )[];
     };
 
-/**
- * This type defines the context shape for session
- */
-export type TSessionContext = {
+/** What the app knows about the person: the input to instruction templating. */
+export type TCustomerContext = {
   /** User's Name */
   userName: string;
   preferences: string[];
 };
+
+/**
+ * Everything an agent run can read from `runContext.context`: the customer plus how the session
+ * is connected, so prompts can differ between a reply that is heard and one that is read.
+ */
+export type TSessionContext = TCustomerContext & { mode: TSessionMode };
 
 /**
  * How a session is connected. `voice` acquires the microphone and plays the model's audio;
@@ -38,7 +42,7 @@ export type TSessionMode = 'voice' | 'text';
 
 export type TUseSessionOptions = {
   audioRef?: RefObject<HTMLAudioElement | null>;
-  context: TSessionContext;
+  context: TCustomerContext;
 
   /** Events */
   onConnect?: () => void;

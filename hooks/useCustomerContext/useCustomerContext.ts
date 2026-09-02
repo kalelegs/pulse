@@ -1,6 +1,6 @@
-import { TSessionContext } from '@/types';
+import { TCustomerContext } from '@/types';
 
-export const useCustomerContext = (): TSessionContext => {
+export const useCustomerContext = (): TCustomerContext => {
   // replace with actual logic of getting user context
   return {
     userName: 'Gaurav',

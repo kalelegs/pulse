@@ -11,6 +11,8 @@ export type TSetMessageFn = (message: TMessage | undefined) => void;
 export type TAppendMessageContentFn = (content: string) => void;
 /** `undefined` between responses, and after a reset. */
 export type TSetResponseIdFn = (responseId: string | undefined) => void;
+/** `undefined` once the tool's output has been submitted, and after a reset. */
+export type TSetPendingToolFn = (toolName: string | undefined) => void;
 
 /**
  * The narrow slice of the chat store that the transport message extractor writes through.
@@ -38,4 +40,6 @@ export type TMessageSink = {
    * bubble I am waiting for" from "another bubble of the response I was called from".
    */
   setResponseId: TSetResponseIdFn;
+  /** Publishes the tool the assistant is waiting on, so the transcript can show it working. */
+  setPendingToolName: TSetPendingToolFn;
 };

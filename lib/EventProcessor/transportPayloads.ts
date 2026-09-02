@@ -60,6 +60,8 @@ export type TOutputItemPayload = {
     /** `message`, `function_call`, `function_call_output`, ... */
     type?: string;
     role?: string;
+    /** Tool name, on `function_call` items. */
+    name?: string;
   };
 };
 

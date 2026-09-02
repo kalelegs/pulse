@@ -67,7 +67,7 @@ export const createSession = async (
     const nextSession = new RealtimeSession<TSessionContext>(rootAgent, {
       model: REALTIME_MODEL,
       transport: new OpenAIRealtimeWebRTC({ ...(audioElement && { audioElement }), mediaStream }),
-      context: options.context,
+      context: { ...options.context, mode },
       // Repeats what the ephemeral token already asked for, on purpose: the SDK's own
       // `session.update` on connect would otherwise overwrite it. Why, and why the model is pinned,
       // is written up at `lib/realtimeConfig.ts` and in `./README.md`.

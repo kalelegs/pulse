@@ -7,7 +7,9 @@ import {
   AGENT_VOICE,
   HANDOFF_LINES,
   preferenceLines,
+  replyStyleLine,
   SCREEN_AWARENESS_LINES,
+  toolCallLine,
 } from '@/agents/shared';
 import { stockAnalystTools } from '@/tools';
 import { TSessionContext } from '@/types';
@@ -31,7 +33,7 @@ const buildInstructions = (runContext: RunContext<TSessionContext>): string =>
     'default to US dollars and US markets unless they say otherwise.',
     ...preferenceLines(runContext.context.preferences),
     '',
-    'You are talking out loud, so keep every reply to one or two short sentences.',
+    replyStyleLine(runContext.context.mode),
     '',
     'You have tools for quotes, price history and news. Always call one before answering',
     'anything numeric — never quote a price, ratio or rating from memory.',
@@ -48,7 +50,7 @@ const buildInstructions = (runContext: RunContext<TSessionContext>): string =>
     ...HANDOFF_LINES,
     'When the user moves on from stocks and markets, hand back to the general assistant.',
     '',
-    'If you decide to call a tool other than a transfer, announce it in a few words first.',
+    toolCallLine(runContext.context.mode),
   ].join('\n');
 
 /**

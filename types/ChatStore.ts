@@ -3,6 +3,7 @@ import type {
   TAppendMessageContentFn,
   TRemoveMessageFn,
   TSetMessageFn,
+  TSetPendingToolFn,
   TSetResponseIdFn,
   TUpsertMessageFn,
 } from './MessageSink';
@@ -77,6 +78,14 @@ export type TChatStore = {
    */
   responseId: string | undefined;
   setResponseId: TSetResponseIdFn;
+  /**
+   * Name of the tool the assistant is executing, or `undefined` when none is. Set when a
+   * `function_call` item completes and cleared when its output is submitted, so the transcript can
+   * show that something is happening during a fetch — there is no message bubble to carry a cue
+   * then, and no response is open either.
+   */
+  pendingToolName: string | undefined;
+  setPendingToolName: TSetPendingToolFn;
   /**
    * Adds a finalised message, or replaces the one already stored under the same id in place.
    *

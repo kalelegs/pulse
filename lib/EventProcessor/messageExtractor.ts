@@ -3,6 +3,7 @@
 import { isKnownTransportEventType, type TMessageSink, type TTransportEventType } from '@/types';
 import type { TransportEvent } from '@openai/agents/realtime';
 import { createAssistantTurnTracker } from './assistantTurn';
+import { createToolCallTracker } from './toolCalls';
 import { createTurnClock } from './turnClock';
 import { createUserTurnTracker } from './userTurn';
 
@@ -45,6 +46,7 @@ export const createMessageExtractor = (sink: TMessageSink): TMessageExtractor =>
   const clock = createTurnClock();
   const assistant = createAssistantTurnTracker(sink, clock);
   const user = createUserTurnTracker(sink, clock);
+  const tools = createToolCallTracker(sink);
 
   const processEvent = (event: TransportEvent) => {
     // Narrowed to the app's known-type list so every `case` below must name a type that list
@@ -86,6 +88,12 @@ export const createMessageExtractor = (sink: TMessageSink): TMessageExtractor =>
       case 'response.output_item.added':
         assistant.handleOutputItemAdded(event);
         break;
+      case 'response.output_item.done':
+        tools.handleOutputItemDone(event);
+        break;
+      case 'conversation.item.added':
+        tools.handleItemAdded(event);
+        break;
       case 'response.done':
         assistant.handleResponseDone(event);
         break;
@@ -117,6 +125,7 @@ export const createMessageExtractor = (sink: TMessageSink): TMessageExtractor =>
   const reset = () => {
     assistant.reset();
     user.reset();
+    tools.reset();
     clock.reset();
   };
 
