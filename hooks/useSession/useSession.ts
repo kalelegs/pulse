@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   TRealtimeUserInput,
   TSessionContext,
+  TSessionMode,
   TUseSessionOptions,
   TUseSessionRetval,
 } from '@/types';
@@ -16,6 +17,7 @@ export const useSession = (options: TUseSessionOptions): TUseSessionRetval => {
   const [session, setSession] = useState<RealtimeSession<TSessionContext>>();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error>();
+  const [mode, setMode] = useState<TSessionMode>();
   // the actual session object
   const sessionRef = useRef<RealtimeSession<TSessionContext>>(undefined);
   // the microphone we handed to the transport. It is ours to stop: `close()` leaves the tracks of a
@@ -54,57 +56,66 @@ export const useSession = (options: TUseSessionOptions): TUseSessionRetval => {
   const disconnect = useCallback(() => {
     teardown();
     setSession(undefined);
+    setMode(undefined);
   }, [teardown]);
 
-  const connect = useCallback(async () => {
-    if (sessionRef.current || isConnectingRef.current) {
-      return;
-    }
-
-    isConnectingRef.current = true;
-    setIsLoading(true);
-    setError(undefined);
-    try {
-      const { session: nextSession, mediaStream } = await createSession(optionsRef);
-
-      if (isUnmountedRef.current) {
-        // Unmounted mid-connect: nobody is left to own the session or the microphone.
-        closeSession(nextSession);
-        stopMediaStream(mediaStream);
+  const connect = useCallback(
+    async (nextMode: TSessionMode) => {
+      if (sessionRef.current || isConnectingRef.current) {
         return;
       }
 
-      sessionRef.current = nextSession;
-      mediaStreamRef.current = mediaStream;
-      setSession(nextSession);
-
+      isConnectingRef.current = true;
+      setIsLoading(true);
+      setError(undefined);
+      setMode(nextMode);
       try {
-        optionsRef.current.onConnect?.();
-      } catch (handlerError) {
-        // A failing handler must not tear down an otherwise healthy session.
-        console.error('onConnect handler failed', handlerError);
+        const { session: nextSession, mediaStream } = await createSession(optionsRef, nextMode);
+
+        if (isUnmountedRef.current) {
+          // Unmounted mid-connect: nobody is left to own the session or the microphone.
+          closeSession(nextSession);
+          stopMediaStream(mediaStream);
+          return;
+        }
+
+        sessionRef.current = nextSession;
+        mediaStreamRef.current = mediaStream;
+        setSession(nextSession);
+
+        try {
+          optionsRef.current.onConnect?.();
+        } catch (handlerError) {
+          // A failing handler must not tear down an otherwise healthy session.
+          console.error('onConnect handler failed', handlerError);
+        }
+      } catch (connectError) {
+        console.error('failed to connect realtime session', connectError);
+        // createSession releases the microphone on every failure path, but tear down again so the
+        // refs cannot survive a half-connected attempt.
+        teardown();
+        setSession(undefined);
+        setMode(undefined);
+        setError(connectError instanceof Error ? connectError : new Error(String(connectError)));
+      } finally {
+        isConnectingRef.current = false;
+        setIsLoading(false);
       }
-    } catch (connectError) {
-      console.error('failed to connect realtime session', connectError);
-      // createSession releases the microphone on every failure path, but tear down again so the
-      // refs cannot survive a half-connected attempt.
-      teardown();
-      setSession(undefined);
-      setError(connectError instanceof Error ? connectError : new Error(String(connectError)));
-    } finally {
-      isConnectingRef.current = false;
-      setIsLoading(false);
-    }
-  }, [teardown]);
+    },
+    [teardown],
+  );
 
-  const toggle = useCallback(async () => {
-    if (session !== undefined) {
-      disconnect();
-      return;
-    }
+  const toggle = useCallback(
+    async (nextMode: TSessionMode) => {
+      if (session !== undefined) {
+        disconnect();
+        return;
+      }
 
-    await connect();
-  }, [session, connect, disconnect]);
+      await connect(nextMode);
+    },
+    [session, connect, disconnect],
+  );
 
   const sendMessage = useCallback((message: TRealtimeUserInput) => {
     if (!sessionRef.current) {
@@ -133,6 +144,7 @@ export const useSession = (options: TUseSessionOptions): TUseSessionRetval => {
     session,
     isLoading,
     isConnected: session !== undefined,
+    mode,
     error,
     sendMessage,
     connect,

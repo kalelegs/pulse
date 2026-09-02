@@ -6,16 +6,17 @@ import {
   RealtimeSession,
   TransportEvent,
 } from '@openai/agents/realtime';
-import { TSessionContext, TUseSessionOptions } from '@/types';
+import { TSessionContext, TSessionMode, TUseSessionOptions } from '@/types';
 import type { RefObject } from 'react';
 import { REALTIME_MODEL, TRANSCRIPTION_LANGUAGE, TRANSCRIPTION_MODEL } from '@/lib/realtimeConfig';
-import { requestMicrophone, stopMediaStream } from './microphone';
+import { createSilentAudioInput, requestMicrophone, stopMediaStream } from './microphone';
 
 /** How long we wait for the transport to finish its SDP exchange before giving up. */
 const CONNECT_TIMEOUT_MS = 15_000;
 
 /**
- * A connected session together with the microphone stream it is using.
+ * A connected session together with the input stream it is using — the microphone in voice mode,
+ * a silent track in text mode.
  *
  * The stream is handed back to the caller because the transport does **not** stop the tracks of a
  * caller supplied `mediaStream` on `close()` — that stream belongs to the application, so the
@@ -38,18 +39,23 @@ export const closeSession = (session?: RealtimeSession<TSessionContext>) => {
 /**
  * Creates and connects a realtime session.
  *
- * The microphone is acquired up front and passed to the transport, which then skips its own
- * `getUserMedia` call. Every failure path after that acquisition releases the microphone again.
+ * The input stream is acquired up front and passed to the transport, which then skips its own
+ * `getUserMedia` call. In voice mode that is the microphone; in text mode it is a silent track, the
+ * model is asked for text-only output, and no audio element is attached, so nothing is heard or
+ * captured. Every failure path after acquisition releases the stream again.
  *
  * @param optionsRef The caller's live options. Connect-time configuration is read once, but the
  *   event handlers are read per event so a re-render can replace them.
+ * @param mode Voice or text; see `TSessionMode`.
  */
 export const createSession = async (
   optionsRef: RefObject<TUseSessionOptions>,
+  mode: TSessionMode,
 ): Promise<TCreatedSession> => {
   const options = optionsRef.current;
-  const audioElement = options.audioRef?.current;
-  const mediaStream = await requestMicrophone();
+  const isVoice = mode === 'voice';
+  const audioElement = isVoice ? options.audioRef?.current : undefined;
+  const mediaStream = isVoice ? await requestMicrophone() : createSilentAudioInput();
 
   let session: RealtimeSession<TSessionContext> | undefined;
   let connectTimeoutId: ReturnType<typeof setTimeout> | undefined;
@@ -66,6 +72,7 @@ export const createSession = async (
       // `session.update` on connect would otherwise overwrite it. Why, and why the model is pinned,
       // is written up at `lib/realtimeConfig.ts` and in `./README.md`.
       config: {
+        outputModalities: [isVoice ? 'audio' : 'text'],
         audio: {
           input: {
             transcription: { model: TRANSCRIPTION_MODEL, language: TRANSCRIPTION_LANGUAGE },

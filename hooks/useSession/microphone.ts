@@ -4,7 +4,25 @@
  */
 export const MIC_PERMISSION_TIMEOUT_MS = 15_000;
 
-/** Stops every track of a microphone stream. Safe to call repeatedly and with `undefined`. */
+/** The audio graph behind each silent stream, so `stopMediaStream` can release it too. */
+const silentContexts = new WeakMap<MediaStream, AudioContext>();
+
+/**
+ * A live audio track that carries silence, for text-mode sessions.
+ *
+ * The WebRTC transport calls `getUserMedia` itself unless it is handed a `mediaStream`, so text
+ * mode has to supply one to avoid the microphone prompt. A `MediaStreamAudioDestinationNode` with
+ * nothing connected to it produces exactly that: a real track the peer connection can negotiate,
+ * with no microphone behind it.
+ */
+export const createSilentAudioInput = (): MediaStream => {
+  const context = new AudioContext();
+  const { stream } = context.createMediaStreamDestination();
+  silentContexts.set(stream, context);
+  return stream;
+};
+
+/** Stops every track of an input stream (and its audio graph, for a silent one). Safe to repeat. */
 export const stopMediaStream = (stream?: MediaStream) => {
   stream?.getTracks().forEach((track) => {
     try {
@@ -13,6 +31,13 @@ export const stopMediaStream = (stream?: MediaStream) => {
       console.error('failed to stop microphone track', error);
     }
   });
+  if (stream && silentContexts.has(stream)) {
+    void silentContexts
+      .get(stream)
+      ?.close()
+      .catch(() => undefined);
+    silentContexts.delete(stream);
+  }
 };
 
 /** Turns a `getUserMedia` rejection into something a user can act on. */

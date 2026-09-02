@@ -29,6 +29,13 @@ export type TSessionContext = {
   preferences: string[];
 };
 
+/**
+ * How a session is connected. `voice` acquires the microphone and plays the model's audio;
+ * `text` hands the transport a silent input and asks the model for text-only output, so it can be
+ * driven entirely from the composer — no microphone prompt and no spoken reply.
+ */
+export type TSessionMode = 'voice' | 'text';
+
 export type TUseSessionOptions = {
   audioRef?: RefObject<HTMLAudioElement | null>;
   context: TSessionContext;
@@ -58,6 +65,8 @@ export type TUseSessionRetval = {
   session?: RealtimeSession<TSessionContext>;
   isLoading: boolean;
   isConnected: boolean;
+  /** The mode being connected or connected in; `undefined` while disconnected. */
+  mode?: TSessionMode;
   /** Set when the last connect attempt failed. Cleared on the next attempt. */
   error?: Error;
   /**
@@ -69,8 +78,8 @@ export type TUseSessionRetval = {
    * through the hook even though today's callers only send text.
    */
   sendMessage: (message: TRealtimeUserInput) => boolean;
-  connect: () => Promise<void>;
+  connect: (mode: TSessionMode) => Promise<void>;
   disconnect: () => void;
-  // connects if disconnected and vice versa
-  toggleConnect: () => void;
+  /** Disconnects when connected, otherwise connects in `mode`. */
+  toggleConnect: (mode: TSessionMode) => void;
 };

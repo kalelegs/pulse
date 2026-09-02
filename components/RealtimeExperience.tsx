@@ -31,7 +31,7 @@ const RealtimeExperience = () => {
   // The extractor carries per-turn state, so it has to outlive renders. `chatMessageSink` reads
   // the store lazily, which keeps this stable for the lifetime of the page.
   const messageExtractor = useMemo(() => createMessageExtractor(chatMessageSink), []);
-  const { isLoading, isConnected, error, toggleConnect, sendMessage } = useSession({
+  const { isLoading, isConnected, mode, error, toggleConnect, sendMessage } = useSession({
     audioRef,
     context,
 
@@ -103,6 +103,15 @@ const RealtimeExperience = () => {
             <div className="flex items-center gap-2">
               <SettingsPanel />
               <ConnectButton
+                mode="voice"
+                activeMode={mode}
+                isLoading={isLoading}
+                isConnected={isConnected}
+                onClick={toggleConnect}
+              />
+              <ConnectButton
+                mode="text"
+                activeMode={mode}
                 isLoading={isLoading}
                 isConnected={isConnected}
                 onClick={toggleConnect}

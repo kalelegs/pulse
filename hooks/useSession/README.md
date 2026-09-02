@@ -1,15 +1,18 @@
 # useSession Hook
 
-Owns one realtime session at a time: the microphone, the `RealtimeSession`, and the callbacks the
-app hangs off it.
+Owns one realtime session at a time: the input stream, the `RealtimeSession`, and the callbacks the
+app hangs off it. `connect(mode)` takes a `TSessionMode`: `voice` acquires the microphone and plays
+the model's audio; `text` hands the transport a silent track (so there is no permission prompt),
+asks for `outputModalities: ['text']` (so nothing is spoken) and attaches no audio element — the
+whole conversation then runs through the composer, which is how the app is tested without a mic.
 
 ## Files
 
-| File               | Purpose                                                                                   |
-| ------------------ | ----------------------------------------------------------------------------------------- |
-| `useSession.ts`    | The hook: connect / disconnect / toggle, `sendMessage`, and the refs that outlive renders |
-| `createSession.ts` | Builds and connects a `RealtimeSession` (with a connect timeout), plus `closeSession`     |
-| `microphone.ts`    | Acquires the microphone with a permission timeout and precise errors; `stopMediaStream`   |
+| File               | Purpose                                                                                                |
+| ------------------ | ------------------------------------------------------------------------------------------------------ |
+| `useSession.ts`    | The hook: connect / disconnect / toggle, `sendMessage`, and the refs that outlive renders              |
+| `createSession.ts` | Builds and connects a `RealtimeSession` (with a connect timeout), plus `closeSession`                  |
+| `microphone.ts`    | Microphone with a permission timeout and precise errors, the silent text-mode input, `stopMediaStream` |
 
 ## Session configuration
 

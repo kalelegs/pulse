@@ -28,7 +28,7 @@
 
 ## Multi-Modal
 
-- Supports voice-first realtime interactions through the realtime session transport.
+- Voice-first over the realtime transport, or **text-only**: connecting with text supplies a silent input and asks for text output, so it runs with no microphone and no speech.
 - Allows text, audio and image messages to be sent into the same live session for hybrid input experiences.
 - Uses an audio element in the UI to stream and play model audio responses in real time.
 
