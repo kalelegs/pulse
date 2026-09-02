@@ -15,6 +15,9 @@ export type TDuration = {
   audioEnd: number;
 };
 
+/** The two things a user bubble can still be waiting on. */
+export type TUserTurnStage = 'listening' | 'transcribing';
+
 export type TMessage = {
   /** Stable identity of the message. Always the transport `item_id` of the conversation item. */
   id: string;
@@ -37,16 +40,16 @@ export type TMessage = {
   spec?: TJsonRenderSpec | null;
 
   /**
-   * True while more content is still expected for this message.
+   * Set while more content is still expected for this message; `undefined` once it has resolved.
    *
    * Only user turns set it. An assistant turn is streamed through `activeMessage` and is finalised
    * exactly once, so "still arriving" is already visible from *where* the message lives. A user
-   * turn has no such place: it is written into `finalisedMessages` on
-   * `input_audio_buffer.committed` to hold its position in turn order, then filled in by
-   * transcription deltas afterwards — so the flag is what tells a half-transcribed bubble from a
-   * finished one.
+   * turn has no such place: it is written into `finalisedMessages` as soon as the user starts
+   * talking to hold its position in turn order, then filled in by transcription deltas afterwards.
+   * The stage is what the bubble renders its cue from: `listening` is speech still being captured,
+   * `transcribing` is a committed buffer whose transcript has not finished arriving.
    */
-  isPending?: boolean;
+  pending?: TUserTurnStage;
 };
 
 export type TAttachSpecFn = (spec: TJsonRenderSpec | null, messageId?: string) => void;

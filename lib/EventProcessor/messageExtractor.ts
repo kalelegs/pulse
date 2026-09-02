@@ -69,6 +69,7 @@ export const createMessageExtractor = (sink: TMessageSink): TMessageExtractor =>
         // the speech clock every user `TDuration` is measured against.
         clock.startSpeech();
         assistant.handleInterruption();
+        user.handleSpeechStarted(event);
         break;
       case 'conversation.item.truncated':
         // The server acknowledging that the *assistant's* audio was cut short (payload: `item_id`,

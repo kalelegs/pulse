@@ -1,6 +1,7 @@
 'use client';
 
 import { RiUser3Line } from '@remixicon/react';
+import ListeningIndicator from './ListeningIndicator';
 import TypingIndicator from './TypingIndicator';
 import { TMessage } from '@/types/ChatStore';
 
@@ -12,10 +13,10 @@ type TUserMessageProps = {
  * A user turn. Rendered right aligned and tinted with the primary colour so it reads as "you"
  * against the neutral assistant cards.
  *
- * `message.isPending` — not emptiness — picks between its three states (placeholder plus dots,
- * partial text plus dots, text alone); see `./README.md`, "User". Deliberately not an `aria-live`
- * region: these are the user's own words, and `TypingIndicator`'s `role="status"` already announces
- * once that transcription is happening.
+ * `message.pending` — not emptiness — picks between its states: listening bars while the user is
+ * still talking, "Transcribing" plus dots once the audio is committed, partial text plus dots, and
+ * text alone; see `./README.md`, "User". Deliberately not an `aria-live` region: these are the
+ * user's own words, and each indicator's `role="status"` already announces its stage once.
  */
 const UserMessage = ({ message }: TUserMessageProps) => {
   const hasText = message.content.trim().length > 0;
@@ -31,7 +32,13 @@ const UserMessage = ({ message }: TUserMessageProps) => {
             {message.content}
           </p>
         ) : null}
-        {message.isPending ? (
+        {message.pending === 'listening' ? (
+          <span className="text-muted-foreground flex items-center gap-2 text-sm italic">
+            Listening
+            <ListeningIndicator label="Listening to your message" />
+          </span>
+        ) : null}
+        {message.pending === 'transcribing' ? (
           <span className="text-muted-foreground flex items-center gap-2 text-sm italic">
             {hasText ? null : 'Transcribing'}
             <TypingIndicator label="Transcribing your message" />

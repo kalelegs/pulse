@@ -1,5 +1,5 @@
 import { createDuration, createTextMessage } from '@/lib/chatMessage';
-import type { TMessage, TMessageSink } from '@/types';
+import type { TMessage, TMessageSink, TUserTurnStage } from '@/types';
 import type { TransportEvent } from '@openai/agents/realtime';
 import {
   asPayload,
@@ -13,18 +13,20 @@ import type { TTurnClock } from './turnClock';
 const TRANSCRIPTION_UNAVAILABLE = '[transcription unavailable]';
 
 /**
- * How long a reserved slot may stay empty before it resolves itself.
+ * How long a committed slot may stay empty before it resolves itself.
  *
- * Input transcription normally lands within a second or two, and the session now asks for it
- * explicitly (`TRANSCRIPTION_MODEL`), but it is still a best-effort side channel: it runs on the
- * committed audio buffer rather than on the response, so nothing about a healthy conversation
- * guarantees it arrives — or, once started, that it finishes. Without this, such a turn renders
- * "Transcribing…" for the rest of the session.
+ * Input transcription is a best-effort side channel: it runs on the committed audio buffer rather
+ * than on the response, so nothing about a healthy conversation guarantees it arrives — or, once
+ * started, that it finishes. Without this, such a turn renders "Transcribing…" for the rest of the
+ * session. Measured from the commit, not from speech start: a long utterance is not a slow
+ * transcription.
  */
 const TRANSCRIPTION_TIMEOUT_MS = 15_000;
 
 export type TUserTurnTracker = {
-  /** `input_audio_buffer.committed` — reserves the turn's slot in the transcript. */
+  /** `input_audio_buffer.speech_started` — reserves the turn's slot in the transcript. */
+  handleSpeechStarted: (event: TransportEvent) => void;
+  /** `input_audio_buffer.committed` — end of speech; transcription starts now. */
   handleCommitted: (event: TransportEvent) => void;
   handleTranscriptDelta: (event: TransportEvent) => void;
   handleTranscriptCompleted: (event: TransportEvent) => void;
@@ -37,40 +39,38 @@ export type TUserTurnTracker = {
  *
  * Input transcription is asynchronous and normally lands *after* the assistant has already started
  * replying, so appending on `completed` would file the user's bubble underneath the reply. Instead
- * the turn claims its slot the moment its audio buffer is committed and is then filled in place,
- * which is what `upsertFinalisedMessage` exists for.
+ * the turn claims its slot the moment the user starts talking — `speech_started` already carries
+ * the id of the item the turn will become — and is then filled in place, which is what
+ * `upsertFinalisedMessage` exists for.
  *
- * Filling happens one delta at a time, so the bubble grows word by word rather than jumping from
- * empty to whole. How much of that is *visible* is the service's call, not ours: transcription
- * only starts once the buffer is committed, and a short utterance is often transcribed fast enough
- * that every delta lands in the same frame. `isPending` on the message keeps the streaming cue up
- * until the turn actually resolves, so a slow one reads as in-progress rather than as finished and
- * truncated.
+ * Filling happens one delta at a time, but transcription only starts once the buffer is committed,
+ * so a short utterance often lands in a single frame. `pending` keeps the cue up until the turn
+ * actually resolves, so a slow one reads as in-progress rather than as finished and truncated.
  */
 export const createUserTurnTracker = (sink: TMessageSink, clock: TTurnClock): TUserTurnTracker => {
   const turns = new Map<string, TMessage>();
-  /** Slots reserved but not yet filled, each holding the timer that will resolve it. */
-  const pending = new Map<string, ReturnType<typeof setTimeout>>();
+  /**
+   * Slots still open, keyed by item. The value is the timer armed at commit; while still listening
+   * there is nothing to time out and only the key matters.
+   */
+  const pending = new Map<string, ReturnType<typeof setTimeout> | undefined>();
 
   /**
-   * True when a slot holds nothing the user actually said.
-   *
-   * The placeholder counts as empty: once the timeout has filled a slot with it, the slot is still
-   * waiting to be told what was on the audio, and a late *empty* `completed` — the service saying
-   * it heard nothing — must be able to retract it. Otherwise a slow-transcribing cough stays on
-   * screen for the rest of the session.
+   * True when a slot holds nothing the user actually said. The placeholder counts as empty: a late
+   * *empty* `completed` must still be able to retract a slot the timeout has already filled, or a
+   * slow-transcribing cough stays on screen for the rest of the session.
    */
   const isEmpty = (content: string) => !content.trim() || content === TRANSCRIPTION_UNAVAILABLE;
 
   const read = (itemId: string): TMessage =>
     turns.get(itemId) ?? createTextMessage(itemId, 'user', '', createDuration());
 
+  /** Already resolved — by `completed`, by `failed` or by the timeout. */
+  const isResolved = (itemId: string) => turns.has(itemId) && !pending.has(itemId);
+
   const settle = (itemId: string) => {
-    const timeoutId = pending.get(itemId);
-    if (timeoutId !== undefined) {
-      clearTimeout(timeoutId);
-      pending.delete(itemId);
-    }
+    clearTimeout(pending.get(itemId));
+    pending.delete(itemId);
   };
 
   /**
@@ -80,16 +80,19 @@ export const createUserTurnTracker = (sink: TMessageSink, clock: TTurnClock): TU
    * partial transcript: a stream that produces three words and then stops is every bit as unfilled
    * as one that never started, and it is the timeout that has to notice.
    */
-  const commit = (message: TMessage) => {
-    const open = { ...message, isPending: true };
+  const commit = (message: TMessage, stage: TUserTurnStage) => {
+    const open = { ...message, pending: stage };
     turns.set(open.id, open);
+    if (!pending.has(open.id)) {
+      pending.set(open.id, undefined);
+    }
     sink.upsertFinalisedMessage(open);
   };
 
-  /** Writes the slot's final state: nothing more is coming, so the streaming cue comes off. */
+  /** Writes the slot's final state: nothing more is coming, so the cue comes off. */
   const resolve = (message: TMessage) => {
     settle(message.id);
-    const closed = { ...message, isPending: false };
+    const closed = { ...message, pending: undefined };
     turns.set(closed.id, closed);
     sink.upsertFinalisedMessage(closed);
   };
@@ -114,12 +117,20 @@ export const createUserTurnTracker = (sink: TMessageSink, clock: TTurnClock): TU
   };
 
   return {
-    handleCommitted: (event) => {
+    handleSpeechStarted: (event) => {
       const { item_id: itemId } = asPayload<TItemScopedPayload>(event);
       if (!itemId || turns.has(itemId)) {
         return;
       }
-      commit(read(itemId));
+      commit(read(itemId), 'listening');
+    },
+    handleCommitted: (event) => {
+      const { item_id: itemId } = asPayload<TItemScopedPayload>(event);
+      if (!itemId || isResolved(itemId) || pending.get(itemId) !== undefined) {
+        return;
+      }
+      // Reserves the slot too, for a transport that commits without a preceding `speech_started`.
+      commit(read(itemId), 'transcribing');
       pending.set(
         itemId,
         setTimeout(() => {
@@ -130,23 +141,22 @@ export const createUserTurnTracker = (sink: TMessageSink, clock: TTurnClock): TU
     },
     handleTranscriptDelta: (event) => {
       const { item_id: itemId, delta } = asPayload<TDeltaPayload>(event);
-      if (!itemId || !delta) {
+      if (!itemId || !delta || isResolved(itemId)) {
+        // Appending to a resolved slot would reopen a bubble with no timer left to close it.
         return;
       }
       const turn = read(itemId);
-      if (turn.isPending === false) {
-        // Already resolved — by `completed`, by `failed` or by the timeout. Appending here would
-        // reopen a finished bubble with no timer left to close it again.
-        return;
-      }
-      commit({
-        ...turn,
-        content: turn.content + delta,
-        duration: {
-          ...turn.duration,
-          textStart: turn.duration.textStart || clock.sinceSpeechStart(),
+      commit(
+        {
+          ...turn,
+          content: turn.content + delta,
+          duration: {
+            ...turn.duration,
+            textStart: turn.duration.textStart || clock.sinceSpeechStart(),
+          },
         },
-      });
+        'transcribing',
+      );
     },
     handleTranscriptCompleted: (event) => {
       const { item_id: itemId, transcript } = asPayload<TTranscriptDonePayload>(event);
@@ -178,10 +188,9 @@ export const createUserTurnTracker = (sink: TMessageSink, clock: TTurnClock): TU
       markUnavailable(itemId);
     },
     reset: () => {
-      // Every slot still open is resolved, mirroring the assistant tracker: the transcript
-      // survives a disconnect, and an unresolved slot would stream for the rest of the tab's life
-      // with nothing left running to finish it. Resolving also clears each slot's timer, so
-      // `pending` is empty once this loop ends.
+      // Every slot still open is resolved, mirroring the assistant tracker: the transcript survives
+      // a disconnect, and an unresolved slot would show its cue forever with nothing left running
+      // to finish it. Resolving clears each slot's timer, so `pending` is empty after this loop.
       [...pending.keys()].forEach(markUnavailable);
       turns.clear();
     },

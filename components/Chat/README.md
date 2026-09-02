@@ -83,20 +83,22 @@ into two items, one turn can produce two bubbles — matching what the user actu
 Input transcription is asynchronous and normally lands _after_ the assistant has started replying,
 so appending on `completed` would put the user's bubble below the reply. Instead:
 
-| Event                                                   | Effect                                                                                      | `isPending` |
-| ------------------------------------------------------- | ------------------------------------------------------------------------------------------- | ----------- |
-| `input_audio_buffer.committed`                          | `upsertFinalisedMessage` with empty content — reserves the slot in turn order               | `true`      |
-| `conversation.item.input_audio_transcription.delta`     | upserts the growing transcript in place, one word at a time                                 | `true`      |
-| `conversation.item.input_audio_transcription.completed` | upserts the authoritative transcript, or **retracts the slot** when the transcript is empty | `false`     |
-| `conversation.item.input_audio_transcription.failed`    | upserts `[transcription unavailable]`, keeping any partial text that did arrive             | `false`     |
-| 15s timeout after the commit                            | resolves an unfilled — or half-filled — slot the same way `failed` does                     | `false`     |
-| `reset()` (connect / disconnect)                        | resolves every slot still open, because the timers that would have done it are about to go  | `false`     |
+| Event                                                   | Effect                                                                                      | `pending`      |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------- | -------------- |
+| `input_audio_buffer.speech_started`                     | `upsertFinalisedMessage` with empty content — reserves the slot in turn order               | `listening`    |
+| `input_audio_buffer.committed`                          | end of speech; arms the transcription timeout (and reserves the slot if nothing did)        | `transcribing` |
+| `conversation.item.input_audio_transcription.delta`     | upserts the growing transcript in place, one word at a time                                 | `transcribing` |
+| `conversation.item.input_audio_transcription.completed` | upserts the authoritative transcript, or **retracts the slot** when the transcript is empty | `undefined`    |
+| `conversation.item.input_audio_transcription.failed`    | upserts `[transcription unavailable]`, keeping any partial text that did arrive             | `undefined`    |
+| 15s timeout after the commit                            | resolves an unfilled — or half-filled — slot the same way `failed` does                     | `undefined`    |
+| `reset()` (connect / disconnect)                        | resolves every slot still open, because the timers that would have done it are about to go  | `undefined`    |
 
-`isPending` is the flag on `TMessage`, and it is what `UserMessage` renders the streaming cue from.
-Emptiness cannot stand in for it: a half-transcribed bubble has text and is still arriving, and a
-resolved one may legitimately hold the placeholder. Its three states are "Transcribing" plus dots,
-partial text plus dots, and text alone — one dots element throughout, so the hand-off from
-placeholder to first word neither restarts the animation nor moves the bubble.
+`pending` is the stage on `TMessage`, and it is what `UserMessage` renders its cue from. Emptiness
+cannot stand in for it: a half-transcribed bubble has text and is still arriving, and a resolved one
+may legitimately hold the placeholder. Its states are listening bars (`ListeningIndicator`) while
+the microphone is still capturing, "Transcribing" plus dots once the audio is committed, partial
+text plus dots, and text alone — one dots element from commit onwards, so the first word neither
+restarts the animation nor moves the bubble.
 
 A reserved slot must always resolve, because an unresolved one shows a streaming cue forever. The
 ways a slot can be left hanging, and what closes each:
@@ -114,11 +116,12 @@ ways a slot can be left hanging, and what closes each:
 `failed` keeps the placeholder rather than retracting, because there _was_ speech the service could
 not read and the assistant may well have replied to it.
 
-The bubble cannot appear before the end of the utterance, and no amount of client code changes
-that: transcription starts on `input_audio_buffer.committed`, which _is_ end-of-speech. What the
-deltas buy is a bubble that fills in progressively instead of in one jump — how visible that is
-depends on how fast the transcription model returns, and for a short sentence it can be a single
-frame. The model is pinned rather than inherited (`TRANSCRIPTION_MODEL` in `lib/realtimeConfig.ts`)
+The bubble appears the moment the user starts talking — `speech_started` already carries the
+`item_id` the turn will become — but its _text_ cannot arrive before the end of the utterance:
+transcription starts on `input_audio_buffer.committed`, which _is_ end-of-speech, and how long the
+server takes to decide that is turn detection's call (the SDK defaults to `semantic_vad`). What
+the deltas buy is a bubble that fills in progressively instead of in one jump — for a short
+sentence that can be a single frame. The model is pinned rather than inherited (`TRANSCRIPTION_MODEL` in `lib/realtimeConfig.ts`)
 so it cannot silently become one that returns the whole transcript at once.
 
 Text turns injected by the app (`session.sendMessage`, e.g. the hidden greeting prompt on connect)
