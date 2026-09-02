@@ -19,7 +19,7 @@ export const linkBlockDefinition = defineBlock({
   }),
   slots: [],
   description:
-    'Hyperlink out to an external URL. `href` must be an absolute http:// or https:// URL; any other scheme renders as plain text. Use it only for real navigable destinations; to offer the user a follow-up prompt inside the conversation use SuggestionChip instead.',
+    'Hyperlink out to an external URL. `href` must be an absolute http:// or https:// URL; any other scheme renders as plain text. Use it only for real navigable destinations; to offer the user a follow-up prompt inside the conversation use SuggestionChipBlock instead.',
   example: {
     href: 'https://weather.gov',
     text: 'Full forecast',

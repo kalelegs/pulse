@@ -15,7 +15,7 @@ export const blockActions = {
       value: z.string().nullable(),
     }),
     description:
-      'The user picked a follow-up suggestion. `text` is the prompt to send back to the assistant on their behalf. Bind this to on.press of a SuggestionChip.',
+      'The user picked a follow-up suggestion. `text` is the prompt to send back to the assistant on their behalf. Bind this to on.press of a SuggestionChipBlock.',
   },
   select: {
     params: z.object({

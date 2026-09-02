@@ -10,7 +10,7 @@ export const textBlockDefinition = defineBlock({
   }),
   slots: [],
   description:
-    'Plain paragraph of prose. This is the default choice for body copy inside a panel; use TextBubble only for chat transcript styling.',
+    'Plain paragraph of prose. This is the default choice for body copy inside a panel; use TextBubbleBlock only for chat transcript styling.',
   example: {
     text: 'Clear skies through the evening with a light breeze from the west.',
     tone: 'muted',

@@ -4,7 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import type { TBlockComponent } from '@/lib/json-render/blocks';
 
-export const TextBubble: TBlockComponent<'TextBubble'> = ({ props, loading }) => {
+export const TextBubbleBlock: TBlockComponent<'TextBubbleBlock'> = ({ props, loading }) => {
   if (loading) {
     return (
       <div className={cn('flex', props.align === 'end' ? 'justify-end' : 'justify-start')}>

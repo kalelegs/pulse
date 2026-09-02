@@ -15,10 +15,10 @@ import { ListBlock } from '@/components/json-render/blocks/ListBlock';
 import { MetricBlock } from '@/components/json-render/blocks/MetricBlock';
 import { ProgressBlock } from '@/components/json-render/blocks/ProgressBlock';
 import { StackBlock } from '@/components/json-render/blocks/StackBlock';
-import { SuggestionChip } from '@/components/json-render/blocks/SuggestionChip';
+import { SuggestionChipBlock } from '@/components/json-render/blocks/SuggestionChipBlock';
 import { TableBlock } from '@/components/json-render/blocks/TableBlock';
 import { TextBlock } from '@/components/json-render/blocks/TextBlock';
-import { TextBubble } from '@/components/json-render/blocks/TextBubble';
+import { TextBubbleBlock } from '@/components/json-render/blocks/TextBubbleBlock';
 import type { TBlockComponents } from '@/lib/json-render/blocks';
 
 /**
@@ -49,8 +49,8 @@ export const blockComponents: TBlockComponents = {
   MetricBlock,
   ProgressBlock,
   StackBlock,
-  SuggestionChip,
+  SuggestionChipBlock,
   TableBlock,
   TextBlock,
-  TextBubble,
+  TextBubbleBlock,
 };

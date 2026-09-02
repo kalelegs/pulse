@@ -146,7 +146,7 @@ export const collectionSection = (): TSpecNode[] => [
           { title: 'Transcript', description: null, icon: 'chat', tone: 'muted' },
           {
             children: [
-              block('TextBubble', {
+              block('TextBubbleBlock', {
                 text: 'Render whatever structure your agent returns as JSON.',
                 speaker: 'Assistant',
                 align: 'start',
@@ -168,7 +168,7 @@ export const followUpSection = (): TSpecNode[] => [
     {
       children: [
         block(
-          'SuggestionChip',
+          'SuggestionChipBlock',
           {
             text: 'Show the weather in San Francisco',
             hint: 'Sends this as your next message',
@@ -181,7 +181,7 @@ export const followUpSection = (): TSpecNode[] => [
             },
           },
         ),
-        block('SuggestionChip', {
+        block('SuggestionChipBlock', {
           text: 'Unbound chip stays static',
           hint: null,
           tone: 'secondary',

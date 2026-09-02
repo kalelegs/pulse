@@ -5,7 +5,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import BlockIcon from '@/components/json-render/BlockIcon';
 import type { TBlockComponent } from '@/lib/json-render/blocks';
 
-export const SuggestionChip: TBlockComponent<'SuggestionChip'> = ({ props, on, loading }) => {
+export const SuggestionChipBlock: TBlockComponent<'SuggestionChipBlock'> = ({
+  props,
+  on,
+  loading,
+}) => {
   const press = on('press');
   const variant = props.tone ?? 'secondary';
   const content = (

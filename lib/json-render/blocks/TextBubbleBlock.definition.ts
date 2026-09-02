@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { defineBlock } from '@/lib/json-render/blocks/defineBlock';
 
-export const textBubbleDefinition = defineBlock({
+export const textBubbleBlockDefinition = defineBlock({
   props: z.object({
     text: z.string(),
     speaker: z.string().nullable(),

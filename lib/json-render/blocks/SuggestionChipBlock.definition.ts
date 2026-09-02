@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { defineBlock } from '@/lib/json-render/blocks/defineBlock';
 import { iconEnum } from '@/lib/json-render/iconNames';
 
-export const suggestionChipDefinition = defineBlock({
+export const suggestionChipBlockDefinition = defineBlock({
   props: z.object({
     text: z.string(),
     hint: z.string().nullable(),

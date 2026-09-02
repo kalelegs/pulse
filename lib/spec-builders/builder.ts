@@ -41,7 +41,7 @@ export const block = <TName extends TBlockName>(
  * Build a type-checked action binding for an element's `on` map.
  *
  * @example
- * block('SuggestionChip', { ... }, { on: { press: bind('suggest', { text: '…', value: null }) } })
+ * block('SuggestionChipBlock', { ... }, { on: { press: bind('suggest', { text: '…', value: null }) } })
  */
 export const bind = <TName extends TActionName>(
   name: TName,

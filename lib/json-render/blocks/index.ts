@@ -16,10 +16,10 @@ import { listBlockDefinition } from '@/lib/json-render/blocks/ListBlock.definiti
 import { metricBlockDefinition } from '@/lib/json-render/blocks/MetricBlock.definition';
 import { progressBlockDefinition } from '@/lib/json-render/blocks/ProgressBlock.definition';
 import { stackBlockDefinition } from '@/lib/json-render/blocks/StackBlock.definition';
-import { suggestionChipDefinition } from '@/lib/json-render/blocks/SuggestionChip.definition';
+import { suggestionChipBlockDefinition } from '@/lib/json-render/blocks/SuggestionChipBlock.definition';
 import { tableBlockDefinition } from '@/lib/json-render/blocks/TableBlock.definition';
 import { textBlockDefinition } from '@/lib/json-render/blocks/TextBlock.definition';
-import { textBubbleDefinition } from '@/lib/json-render/blocks/TextBubble.definition';
+import { textBubbleBlockDefinition } from '@/lib/json-render/blocks/TextBubbleBlock.definition';
 
 /**
  * The single source of truth for the block vocabulary.
@@ -54,10 +54,10 @@ export const blockDefinitions = {
   MetricBlock: metricBlockDefinition,
   ProgressBlock: progressBlockDefinition,
   StackBlock: stackBlockDefinition,
-  SuggestionChip: suggestionChipDefinition,
+  SuggestionChipBlock: suggestionChipBlockDefinition,
   TableBlock: tableBlockDefinition,
   TextBlock: textBlockDefinition,
-  TextBubble: textBubbleDefinition,
+  TextBubbleBlock: textBubbleBlockDefinition,
 };
 
 /** Union of every block `type` string an agent may emit. */

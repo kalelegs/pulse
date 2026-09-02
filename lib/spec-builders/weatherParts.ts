@@ -146,7 +146,7 @@ export const followUpChips = (report: TWeatherReport): TSpecNode => {
     {
       children: [
         block(
-          'SuggestionChip',
+          'SuggestionChipBlock',
           { text: 'Show me tomorrow', hint: null, tone: 'outline', icon: 'calendar' },
           {
             on: {
@@ -158,7 +158,7 @@ export const followUpChips = (report: TWeatherReport): TSpecNode => {
           },
         ),
         block(
-          'SuggestionChip',
+          'SuggestionChipBlock',
           { text: 'What should I wear?', hint: null, tone: 'outline', icon: 'idea' },
           {
             on: {

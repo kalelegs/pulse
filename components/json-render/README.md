@@ -118,27 +118,27 @@ stays visually covered.
 
 ## Block vocabulary
 
-| Block            | Slots   | Use for                                      |
-| ---------------- | ------- | -------------------------------------------- |
-| `StackBlock`     | default | row/column flow — the default container      |
-| `GridBlock`      | default | evenly sized tiles                           |
-| `DividerBlock`   | —       | section rule, optional label                 |
-| `CardBlock`      | default | bordered surface with title/description/icon |
-| `CarouselBlock`  | default | horizontal snap strip                        |
-| `ListBlock`      | default | bulleted or numbered list                    |
-| `HeadingBlock`   | —       | section title + subtitle                     |
-| `TextBlock`      | —       | paragraph prose                              |
-| `TextBubble`     | —       | chat-transcript bubble                       |
-| `LabelBlock`     | —       | short caption / field label                  |
-| `MetricBlock`    | —       | headline number + unit + delta/trend         |
-| `KeyValueBlock`  | —       | one labelled fact                            |
-| `ProgressBlock`  | —       | 0–100 level bar                              |
-| `TableBlock`     | —       | small tabular data                           |
-| `BadgeBlock`     | —       | static status pill                           |
-| `SuggestionChip` | —       | pressable follow-up                          |
-| `IconBlock`      | —       | standalone pictogram                         |
-| `ImageBlock`     | —       | remote image + caption                       |
-| `LinkBlock`      | —       | external hyperlink                           |
+| Block                 | Slots   | Use for                                      |
+| --------------------- | ------- | -------------------------------------------- |
+| `StackBlock`          | default | row/column flow — the default container      |
+| `GridBlock`           | default | evenly sized tiles                           |
+| `DividerBlock`        | —       | section rule, optional label                 |
+| `CardBlock`           | default | bordered surface with title/description/icon |
+| `CarouselBlock`       | default | horizontal snap strip                        |
+| `ListBlock`           | default | bulleted or numbered list                    |
+| `HeadingBlock`        | —       | section title + subtitle                     |
+| `TextBlock`           | —       | paragraph prose                              |
+| `TextBubbleBlock`     | —       | chat-transcript bubble                       |
+| `LabelBlock`          | —       | short caption / field label                  |
+| `MetricBlock`         | —       | headline number + unit + delta/trend         |
+| `KeyValueBlock`       | —       | one labelled fact                            |
+| `ProgressBlock`       | —       | 0–100 level bar                              |
+| `TableBlock`          | —       | small tabular data                           |
+| `BadgeBlock`          | —       | static status pill                           |
+| `SuggestionChipBlock` | —       | pressable follow-up                          |
+| `IconBlock`           | —       | standalone pictogram                         |
+| `ImageBlock`          | —       | remote image + caption                       |
+| `LinkBlock`           | —       | external hyperlink                           |
 
 Actions: `suggest` (`{ text, value }`) and `select` (`{ value, label }`), plus the
 runtime built-ins `setState` / `pushState` / `removeState` / `validateForm` from
@@ -147,7 +147,7 @@ Bind them on the **element**, not in props:
 
 ```json
 {
-  "type": "SuggestionChip",
+  "type": "SuggestionChipBlock",
   "props": { "text": "Show hourly" },
   "children": [],
   "on": { "press": { "action": "suggest", "params": { "text": "Show the hourly forecast" } } }

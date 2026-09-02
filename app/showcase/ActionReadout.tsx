@@ -13,7 +13,7 @@ export type TActionReadoutProps = {
 /**
  * Live readout of `JsonRenderSurface.onAction`.
  *
- * Pressing a bound `SuggestionChip` has no visible effect on its own, so
+ * Pressing a bound `SuggestionChipBlock` has no visible effect on its own, so
  * without this the chips would only be *rendered*, never *demonstrated*. Sticks
  * to the top of the viewport so a chip lower down the page can still be seen to
  * fire.
