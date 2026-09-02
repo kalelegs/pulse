@@ -2,9 +2,11 @@
 
 import { BadgeBlock } from '@/components/json-render/blocks/BadgeBlock';
 import { BarChartBlock } from '@/components/json-render/blocks/BarChartBlock';
+import { ButtonBlock } from '@/components/json-render/blocks/ButtonBlock';
 import { CalloutBlock } from '@/components/json-render/blocks/CalloutBlock';
 import { CardBlock } from '@/components/json-render/blocks/CardBlock';
 import { CarouselBlock } from '@/components/json-render/blocks/CarouselBlock';
+import { CodeBlock } from '@/components/json-render/blocks/CodeBlock';
 import { DividerBlock } from '@/components/json-render/blocks/DividerBlock';
 import { GridBlock } from '@/components/json-render/blocks/GridBlock';
 import { HeadingBlock } from '@/components/json-render/blocks/HeadingBlock';
@@ -18,8 +20,10 @@ import { ListBlock } from '@/components/json-render/blocks/ListBlock';
 import { MetricBlock } from '@/components/json-render/blocks/MetricBlock';
 import { ProgressBlock } from '@/components/json-render/blocks/ProgressBlock';
 import { QuoteBlock } from '@/components/json-render/blocks/QuoteBlock';
+import { RatingBlock } from '@/components/json-render/blocks/RatingBlock';
 import { SegmentedBarBlock } from '@/components/json-render/blocks/SegmentedBarBlock';
 import { StackBlock } from '@/components/json-render/blocks/StackBlock';
+import { StepperBlock } from '@/components/json-render/blocks/StepperBlock';
 import { SuggestionChipBlock } from '@/components/json-render/blocks/SuggestionChipBlock';
 import { TableBlock } from '@/components/json-render/blocks/TableBlock';
 import { TextBlock } from '@/components/json-render/blocks/TextBlock';
@@ -42,9 +46,11 @@ import type { TBlockComponents } from '@/lib/json-render/blocks';
 export const blockComponents: TBlockComponents = {
   BadgeBlock,
   BarChartBlock,
+  ButtonBlock,
   CalloutBlock,
   CardBlock,
   CarouselBlock,
+  CodeBlock,
   DividerBlock,
   GridBlock,
   HeadingBlock,
@@ -58,8 +64,10 @@ export const blockComponents: TBlockComponents = {
   MetricBlock,
   ProgressBlock,
   QuoteBlock,
+  RatingBlock,
   SegmentedBarBlock,
   StackBlock,
+  StepperBlock,
   SuggestionChipBlock,
   TableBlock,
   TextBlock,

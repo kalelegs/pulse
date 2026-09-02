@@ -1,9 +1,24 @@
 'use client';
 
 import { z } from 'zod';
-import { jsonRenderCatalog } from '@/lib/json-render/catalog';
 import type { TJsonRenderSpec } from '@/lib/json-render/types';
-import { bindingIssues, propIssues, type TDraftElement } from '@/tools/specChecks';
+import { parseAndValidateSpec } from '@/lib/json-render/validateSpec';
+
+/**
+ * A JSON object, or a JSON string encoding one. Models emit both — a chip's
+ * `on` binding arrives as a literal object at least as often as a string — and
+ * rejecting one shape at the SDK layer produced an opaque "Invalid JSON input
+ * for tool" the model could not act on.
+ *
+ * `z.looseObject({})` rather than `z.record(...)`: the SDK's strict-mode
+ * conversion refuses a record (it cannot close it with `additionalProperties:
+ * false`) but accepts a loose object, which it serialises as an empty closed
+ * object. That branch says nothing except "an object goes here", so the property
+ * descriptions carry the real contract; the parser accepts any object
+ * regardless. The realtime transport forwards `parameters` verbatim, with no
+ * strict grammar, so the description is what the model actually reads.
+ */
+const jsonObjectOrString = z.union([z.string(), z.looseObject({})]);
 
 /**
  * Tool parameters for a model-authored spec.
@@ -13,20 +28,17 @@ import { bindingIssues, propIssues, type TDraftElement } from '@/tools/specCheck
  * mode `elements` collapses to `{ type: "object", properties: {},
  * additionalProperties: false }` — an opaque blob the model cannot fill in.
  *
- * Two deliberate shape changes make this survive OpenAI's own strict-mode
+ * Two deliberate shape choices make this survive OpenAI's own strict-mode
  * conversion, which rejects open-ended maps for the same reason:
  *
- * - `elements` is a flat **array** carrying its own `key`, converted to the map
- *   form in `toJsonRenderSpec`. Models also emit flat arrays more reliably than
- *   they emit keyed objects.
- * - `props` and `on` are **JSON strings**. Their shape genuinely varies per
- *   block — `TableBlock.rows` is a string matrix, `GridBlock.columns` a number —
- *   and no closed object schema can cover that. The strings are parsed and then
- *   checked in three layers, so nothing is trusted on the way in:
- *   `jsonRenderCatalog.validate()` for the element envelope, each block's own
- *   Zod props schema for `props`, and `blockActions` for every `on` binding.
- *   The catalog alone is not enough — its schema types `props` loosely, so a
- *   `TableBlock` whose `columns` is a string would pass it and throw on screen.
+ * - `elements` is a flat **array** carrying its own `key`; models emit flat
+ *   arrays more reliably than keyed objects.
+ * - `props` and `on` are a **JSON object or a JSON string** of one. Their shape
+ *   genuinely varies per block — `TableBlock.rows` is a string matrix,
+ *   `GridBlock.columns` a number — and no closed object schema can cover that.
+ *
+ * Nothing here is trusted: `lib/json-render/validateSpec.ts` normalises both
+ * shapes and runs the envelope, per-block props and action-binding checks.
  */
 export const uiSpecParameters = z.object({
   root: z.string().describe('Key of the outermost element. Usually a CardBlock or StackBlock.'),
@@ -35,17 +47,16 @@ export const uiSpecParameters = z.object({
       z.object({
         key: z.string().describe('Unique id for this element, referenced by parents.'),
         type: z.string().describe('Block name, exactly as spelled in the block vocabulary.'),
-        props: z
-          .string()
-          .describe('JSON object of this block\'s props, e.g. {"text":"Hi","tone":null}.'),
+        props: jsonObjectOrString.describe(
+          'This block\'s props as a JSON object, e.g. {"text":"Hi","tone":null}. A JSON string of that object is accepted too. Keys you omit are treated as null.',
+        ),
         children: z
           .array(z.string())
           .describe('Keys of child elements in render order. Empty array for leaf blocks.'),
-        on: z
-          .string()
+        on: jsonObjectOrString
           .nullable()
           .describe(
-            'JSON action bindings, e.g. {"press":{"action":"suggest","params":{"text":"...","value":null}}}. Null when the element is not interactive.',
+            'Action bindings as a JSON object, e.g. {"press":{"action":"suggest","params":{"text":"..."}}}. A JSON string of that object is accepted too. Null when the element is not interactive.',
           ),
       }),
     )
@@ -59,91 +70,16 @@ export type TUiSpecParameters = z.infer<typeof uiSpecParameters>;
 export type TSpecConversionResult =
   { ok: true; spec: TJsonRenderSpec } | { ok: false; error: string };
 
-const parseJsonObject = (value: string, label: string): Record<string, unknown> => {
-  let parsed: unknown;
-
-  try {
-    parsed = JSON.parse(value);
-  } catch {
-    throw new Error(`${label} is not valid JSON.`);
-  }
-
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-    throw new Error(`${label} must be a JSON object.`);
-  }
-
-  return parsed as Record<string, unknown>;
-};
-
-/** Renders the first few issues as one line each, so the model can act on them. */
-const describeIssues = (issues: string[]): string =>
-  issues.slice(0, 8).join('; ') || 'the spec did not match the block schemas';
-
-/** Catalog issues in the same `path: message` shape as the per-element checks. */
-const catalogIssues = (error: z.ZodError | undefined): string[] =>
-  (error?.issues ?? []).map(
-    (issue) => `${issue.path.map(String).join('.') || '(root)'}: ${issue.message}`,
-  );
-
 /**
- * Turns the flat array the model emitted into a validated `TJsonRenderSpec`.
- *
- * Every failure returns prose aimed at the model rather than throwing, because
- * the model's next move is to fix the spec and call the tool again.
- *
- * `elements` is a null-prototype object and every lookup goes through
- * `Object.hasOwn`: keys are model-chosen, and a key such as `"constructor"`
- * would otherwise hit `Object.prototype` and read as a duplicate.
+ * The thin `render_ui` adapter over `parseAndValidateSpec`: the first few
+ * issues, one line each, folded into a single sentence the tool returns.
  *
  * @param input Parsed `render_ui` arguments.
  */
 export const toJsonRenderSpec = (input: TUiSpecParameters): TSpecConversionResult => {
-  const elements: Record<string, TDraftElement> = Object.create(null);
+  const result = parseAndValidateSpec(input);
 
-  for (const element of input.elements) {
-    if (Object.hasOwn(elements, element.key)) {
-      return { ok: false, error: `Duplicate element key "${element.key}".` };
-    }
-
-    try {
-      elements[element.key] = {
-        type: element.type,
-        props: parseJsonObject(element.props, `props of "${element.key}"`),
-        children: element.children,
-        ...(element.on ? { on: parseJsonObject(element.on, `on of "${element.key}"`) } : {}),
-      };
-    } catch (error) {
-      return { ok: false, error: `The ${(error as Error).message}` };
-    }
-  }
-
-  if (!Object.hasOwn(elements, input.root)) {
-    return { ok: false, error: `Root key "${input.root}" is not one of the elements.` };
-  }
-
-  const missing = input.elements.flatMap((element) =>
-    element.children.filter((child) => !Object.hasOwn(elements, child)),
-  );
-
-  if (missing.length) {
-    return { ok: false, error: `These child keys have no element: ${missing.join(', ')}.` };
-  }
-
-  const spec = { root: input.root, elements } as TJsonRenderSpec;
-  const validation = jsonRenderCatalog.validate(spec);
-
-  if (!validation.success) {
-    return { ok: false, error: describeIssues(catalogIssues(validation.error)) };
-  }
-
-  const issues = Object.entries(elements).flatMap(([key, element]) => [
-    ...propIssues(key, element),
-    ...bindingIssues(key, element.on),
-  ]);
-
-  if (issues.length) {
-    return { ok: false, error: describeIssues(issues) };
-  }
-
-  return { ok: true, spec };
+  return result.ok
+    ? result
+    : { ok: false, error: result.issues.slice(0, 8).join('; ') || 'the spec did not validate' };
 };

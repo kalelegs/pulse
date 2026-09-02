@@ -11,11 +11,11 @@ export const tableBlockDefinition = defineBlock({
   description:
     'Compact data table of pre-formatted strings. Every row must have the same length as `columns`; extra cells are dropped and missing ones render blank. Prefer KeyValueBlock for fewer than three facts.',
   example: {
-    columns: ['Day', 'High', 'Low'],
+    columns: ['Plan', 'Price', 'Seats'],
     rows: [
-      ['Mon', '71°', '55°'],
-      ['Tue', '68°', '54°'],
+      ['Starter', '$9/mo', '1'],
+      ['Team', '$29/mo', '10'],
     ],
-    caption: 'Next two days',
+    caption: 'Billed monthly',
   },
 });

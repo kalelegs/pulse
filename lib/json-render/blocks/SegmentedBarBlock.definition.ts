@@ -18,12 +18,12 @@ export const segmentedBarBlockDefinition = defineBlock({
   }),
   slots: [],
   description:
-    'Single stacked bar showing how a whole splits into parts — analyst buy/hold/sell counts, a portfolio allocation, poll results, storage used. Segment widths are proportional to `value`; the legend lists each part.',
+    'Single stacked bar showing how a whole splits into parts — votes by option, a budget by category, storage used against free, survey answers. Segment widths are proportional to `value`; the legend lists each part.',
   example: {
     segments: [
-      { label: 'Buy', value: 24, tone: 'success' },
-      { label: 'Hold', value: 9, tone: 'warning' },
-      { label: 'Sell', value: 2, tone: 'destructive' },
+      { label: 'Yes', value: 24, tone: 'success' },
+      { label: 'Undecided', value: 9, tone: 'warning' },
+      { label: 'No', value: 2, tone: 'destructive' },
     ],
     showLegend: true,
     format: 'value',

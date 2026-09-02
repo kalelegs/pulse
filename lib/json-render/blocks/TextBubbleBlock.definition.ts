@@ -12,9 +12,9 @@ export const textBubbleBlockDefinition = defineBlock({
   description:
     'Chat-transcript speech bubble with an optional speaker label. Use it only when reproducing conversational turns; ordinary explanatory copy belongs in TextBlock.',
   example: {
-    text: 'Here is the forecast you asked for.',
-    speaker: 'Assistant',
-    align: 'start',
+    text: 'Can you summarise the last meeting?',
+    speaker: 'You',
+    align: 'end',
     tone: 'default',
   },
 });

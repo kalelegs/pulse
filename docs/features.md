@@ -14,28 +14,24 @@
 
 ## Ultra Low Latency
 
-- Uses low latency WebRTC (**UDP based**) multi-modal connection.
-- Securely connects directly to model provider (e.g. OAI) without going through our backend servers.
-  - An ephemeral token issued from our backend just for establishing the connection to model provider
-  - After this initial handshake, our servers are out of picture (except of course **some** tool calls)
-- Agents are effectively "hosted" on the client runtime (browser/app), so turn-taking, state updates, and tool selection happen close to the user instead of on a relay backend.
-- This direct client <-> model-provider low latency path avoids an extra server hop and avoids running duplicate orchestration loops on your own servers for every turn.
-- Cost can be lower in practice because you typically pay mainly for model tokens + selective tool calls, instead of model tokens **plus** always-on backend compute/network for proxying realtime traffic.
-- Using official Realtime rates, rough audio-only baseline is small: ~600 input audio tokens/min (1 token/100ms) and ~1200 output audio tokens/min (1 token/50ms), which is about `$0.00324/min` on `gpt-realtime-mini` and `$0.0216/min` on `gpt-realtime` before extra text/tool/transcription usage.
-- For workloads that do not need a heavier frontier model on every turn, `gpt-realtime-mini` + tools can be a strong price/performance setup compared with a backend-mediated architecture that also invokes frontier reasoning models each turn.
+- Uses a low latency WebRTC (**UDP based**) multi-modal connection straight to the model provider.
+  Our backend only mints an ephemeral token for the handshake; after that it is out of the picture
+  (except for **some** tool calls).
+- Agents are "hosted" on the client runtime, so turn-taking, state and tool selection happen close to the user; the direct client <-> provider path avoids a server hop and duplicate orchestration loops.
+- Cost can be lower: you pay for model tokens and selective tool calls, not for always-on backend compute proxying realtime traffic.
+- Audio-only baseline is small: ~600 input and ~1200 output audio tokens/min, about `$0.00324/min` on `gpt-realtime-mini` and `$0.0216/min` on `gpt-realtime` before text, tool and transcription usage.
+- For workloads that do not need a frontier model every turn, `gpt-realtime-mini` + tools is a strong price/performance setup.
   - References: [OpenAI API Pricing](https://openai.com/api/pricing/) and [Realtime Cost Guide](https://developers.openai.com/api/docs/guides/realtime-costs/)
-- Architecture is flexible enough to run both realtime and non realtime model. But this repo only focuses on realtime.
 
 ## Multi-Modal
 
 - Voice-first over the realtime transport, or **text-only**: connecting with text supplies a silent input and asks for text output, so it runs with no microphone and no speech.
-- Allows text, audio and image messages to be sent into the same live session for hybrid input experiences.
-- Uses an audio element in the UI to stream and play model audio responses in real time.
+- Text, audio and image messages share one live session; model audio plays through an audio element.
 
 ## Multi-Agent
 
-- Realtime agents live in [`/agents`](/agents/) as reusable modules: a `name`, a `voice`, a
-  `handoffDescription`, an instruction builder and a tool set from [`/tools`](/tools/).
+- Agents live in [`/agents`](/agents/): a `name`, `voice`, `handoffDescription`, instruction
+  builder and a tool set from [`/tools`](/tools/).
 - A session starts on the **root agent** (`Pulse Assistant`) and hands off to **specialists**, each
   a bundle of related tools with its own prompt — the same idea as
   [skills](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview) or tool-sets.
@@ -89,7 +85,6 @@ clear leaning, and says it is not financial advice. When the subject changes it 
 ## Dynamic UI Rendering with json-render
 
 - Uses [json-render](https://github.com/vercel-labs/json-render) to render UI from declarative JSON specs.
-- Enables agents to drive rich interfaces without manual component wiring per view.
 - Keeps rendering generic and composable through a shared registry and renderer provider pattern.
 - A vocabulary of domain-neutral blocks (definitions in `lib/json-render/blocks/`, components in
   `components/json-render/blocks/`; `/showcase` renders every one and shows the live count) covers
@@ -116,12 +111,19 @@ For a realtime **voice** agent this is the right trade:
 - **Always valid.** A spec that compiles cannot violate the catalog schema.
 - **Unhallucinable.** The model cannot invent a broken layout mid-sentence.
 
+**`design_ui` — generative UI by delegation, the default.** The realtime model sends a brief and
+a server-side text agent (`agents/uiDesigner.ts`, model `UI_DESIGN_MODEL`) composes and validates
+the spec: the model best at layout does the layout, and the session never carries the vocabulary.
+
 **`render_ui` — the escape hatch.** For open-ended requests the typed builders do not cover, the
-agent emits its own spec as tool arguments. Before anything is rendered it passes three checks —
-`jsonRenderCatalog.validate()` for the element envelope, each block's own Zod props schema for its
-`props`, and the `blockActions` vocabulary for every `on` binding — so a bad spec comes back to the
-model as `key.path: message` lines describing what was wrong rather than reaching the screen. This is what makes the block registry genuinely usable _by_ agents,
-rather than only usable by the app on their behalf.
+agent emits its own spec as tool arguments, choosing from 29 domain-neutral blocks with a short
+composition guide in the tool description. `props` and `on` may be JSON objects or JSON strings
+of them. Before anything is rendered the spec passes three checks — `jsonRenderCatalog.validate()`
+for the element envelope, each block's own Zod props schema for its `props` (omitted nullable keys
+are filled with null; unknown keys and wrong types are reported), and the `blockActions` vocabulary
+for every `on` binding — so a bad spec comes back to the model as `key.path: message` lines
+describing what was wrong rather than reaching the screen. This is what makes the block registry
+genuinely usable _by_ agents, rather than only usable by the app on their behalf.
 
 **Speech and screen say different things.** Every tool returns prose for the ear and a spec for the
 eye. A voice assistant that reads a table out loud is worse than one that never drew it, so the
@@ -185,15 +187,12 @@ flowchart TB
 
 - Flexible, strongly typed context can be passed when creating realtime sessions
 - Context values are available during agent runs and instruction building.
-- This enables context-aware behavior including and beyond user-specific personalization.
 
 ## Dynamic Instruction Templating
 
 - Agent instructions are built dynamically instead of being fully static text.
 - A shared instruction template can include placeholders resolved at runtime.
-- Placeholders can map to any available session context values, not just user fields.
 
 ## Realtime Events Panel for Debugging
 
 - A dedicated realtime events panel surfaces transport/session activity for debugging and observability.
-- Helps inspect realtime behavior while developing and tuning agent experiences.

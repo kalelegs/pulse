@@ -11,5 +11,5 @@ export const badgeBlockDefinition = defineBlock({
   slots: [],
   description:
     'Small non-interactive status pill — a category, severity or state label. Use SuggestionChipBlock instead when pressing it should do something.',
-  example: { text: 'Air quality: good', tone: 'secondary', icon: 'leaf' },
+  example: { text: 'In progress', tone: 'secondary', icon: 'clock' },
 });

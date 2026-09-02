@@ -9,12 +9,12 @@ export const calloutBlockDefinition = defineBlock({
     tone: z.enum(['info', 'success', 'warning', 'destructive', 'muted']).nullable(),
     icon: iconEnum,
   }),
-  slots: [],
+  slots: ['default'],
   description:
-    'Short highlighted note set apart from the surrounding content — a caveat, a disclaimer, a tip, a warning. One or two sentences; use TextBlock for ordinary prose.',
+    'Short highlighted note set apart from the surrounding content — a caveat, a disclaimer, a tip, a warning. One or two sentences; use TextBlock for ordinary prose. Children (usually none) render beneath the text, so a caveat can carry a LinkBlock or a SuggestionChipBlock.',
   example: {
-    title: 'Not financial advice',
-    text: 'Figures are delayed market data. Do your own research before trading.',
+    title: 'Heads up',
+    text: 'Availability was checked a few minutes ago and can change before you book.',
     tone: 'warning',
     icon: 'warning',
   },

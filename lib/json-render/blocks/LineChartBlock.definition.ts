@@ -20,11 +20,11 @@ export const lineChartBlockDefinition = defineBlock({
   }),
   slots: [],
   description:
-    'Line chart of one or more numeric series over an ordered axis — prices over time, temperatures by hour, any trend. `sm` is an axis-less sparkline to sit beside a MetricBlock; `md` and `lg` add min/max and first/last labels. Every series should have the same number of values.',
+    'Line chart of one or more numeric series over an ordered axis — a value over time, readings by hour, any trend. `sm` is an axis-less sparkline to sit beside a MetricBlock; `md` and `lg` add min/max and first/last labels. Every series should have the same number of values.',
   example: {
-    series: [{ label: 'Close', values: [182.1, 185.4, 183.9, 188.2, 191.0], tone: 'primary' }],
+    series: [{ label: 'Visitors', values: [820, 940, 910, 1180, 1260], tone: 'primary' }],
     xLabels: ['Mon', '', 'Wed', '', 'Fri'],
-    unit: '$',
+    unit: null,
     size: 'md',
     showArea: true,
   },

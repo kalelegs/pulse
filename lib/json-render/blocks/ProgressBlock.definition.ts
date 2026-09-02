@@ -10,6 +10,6 @@ export const progressBlockDefinition = defineBlock({
   }),
   slots: [],
   description:
-    'Horizontal progress/level bar. `value` is a percentage from 0 to 100; use `valueLabel` to show the real-world figure (e.g. "6 of 10", "UV 6").',
-  example: { value: 60, label: 'UV index', valueLabel: '6 of 10', tone: 'warning' },
+    'Horizontal progress/level bar. `value` is a percentage from 0 to 100; use `valueLabel` to show the real-world figure (e.g. "6 of 10 GB", "Step 3 of 5").',
+  example: { value: 60, label: 'Storage used', valueLabel: '6 of 10 GB', tone: 'warning' },
 });

@@ -9,5 +9,5 @@ export const labelBlockDefinition = defineBlock({
   slots: [],
   description:
     'Short caption or field label — a few words, never a sentence. Set `subtle` for de-emphasised helper text. Use TextBlock for prose and HeadingBlock for section titles.',
-  example: { text: 'Wind', subtle: true },
+  example: { text: 'Optional', subtle: true },
 });

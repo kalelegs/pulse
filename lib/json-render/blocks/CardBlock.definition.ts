@@ -13,9 +13,9 @@ export const cardBlockDefinition = defineBlock({
   description:
     'Bordered surface that groups related content under an optional title, description and icon. This is the top-level container for most standalone answers; nest StackBlock/GridBlock inside it for layout.',
   example: {
-    title: 'San Francisco',
-    description: 'Partly cloudy · Updated just now',
-    icon: 'cloudy',
+    title: 'Trip summary',
+    description: '3 nights · 2 travellers',
+    icon: 'calendar',
     tone: 'default',
   },
 });

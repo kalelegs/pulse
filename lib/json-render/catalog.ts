@@ -8,7 +8,7 @@ import { blockActions, blockDefinitions } from '@/lib/json-render/blocks';
  *
  * **This module must never import React components.** It exists so that
  * `jsonRenderCatalog.validate()` and the block vocabulary behind it stay
- * importable from server code and plain Node contexts: `tools/specSchema.ts`
+ * importable from server code and plain Node contexts: `validateSpec.ts`
  * validates model-authored specs with it and `JsonRenderSurface` re-checks
  * every spec before rendering. Keeping it free of `next/image`, shadcn and
  * `'use client'` is what makes that possible.

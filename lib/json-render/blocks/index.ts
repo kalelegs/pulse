@@ -3,9 +3,11 @@ import type { z } from 'zod';
 import type { BaseComponentProps } from '@json-render/react';
 import { badgeBlockDefinition } from '@/lib/json-render/blocks/BadgeBlock.definition';
 import { barChartBlockDefinition } from '@/lib/json-render/blocks/BarChartBlock.definition';
+import { buttonBlockDefinition } from '@/lib/json-render/blocks/ButtonBlock.definition';
 import { calloutBlockDefinition } from '@/lib/json-render/blocks/CalloutBlock.definition';
 import { cardBlockDefinition } from '@/lib/json-render/blocks/CardBlock.definition';
 import { carouselBlockDefinition } from '@/lib/json-render/blocks/CarouselBlock.definition';
+import { codeBlockDefinition } from '@/lib/json-render/blocks/CodeBlock.definition';
 import { dividerBlockDefinition } from '@/lib/json-render/blocks/DividerBlock.definition';
 import { gridBlockDefinition } from '@/lib/json-render/blocks/GridBlock.definition';
 import { headingBlockDefinition } from '@/lib/json-render/blocks/HeadingBlock.definition';
@@ -19,8 +21,10 @@ import { listBlockDefinition } from '@/lib/json-render/blocks/ListBlock.definiti
 import { metricBlockDefinition } from '@/lib/json-render/blocks/MetricBlock.definition';
 import { progressBlockDefinition } from '@/lib/json-render/blocks/ProgressBlock.definition';
 import { quoteBlockDefinition } from '@/lib/json-render/blocks/QuoteBlock.definition';
+import { ratingBlockDefinition } from '@/lib/json-render/blocks/RatingBlock.definition';
 import { segmentedBarBlockDefinition } from '@/lib/json-render/blocks/SegmentedBarBlock.definition';
 import { stackBlockDefinition } from '@/lib/json-render/blocks/StackBlock.definition';
+import { stepperBlockDefinition } from '@/lib/json-render/blocks/StepperBlock.definition';
 import { suggestionChipBlockDefinition } from '@/lib/json-render/blocks/SuggestionChipBlock.definition';
 import { tableBlockDefinition } from '@/lib/json-render/blocks/TableBlock.definition';
 import { textBlockDefinition } from '@/lib/json-render/blocks/TextBlock.definition';
@@ -33,7 +37,7 @@ import { timelineBlockDefinition } from '@/lib/json-render/blocks/TimelineBlock.
  * This module lives under `lib/` and is deliberately React-free: every import
  * above is a `.definition` file, and the React types are `import type` only,
  * so nothing survives to runtime. That lets `lib/json-render/catalog.ts` — and
- * therefore `tools/specSchema.ts` — import it from the server without pulling
+ * therefore `lib/json-render/validateSpec.ts` — import it from the server without pulling
  * in `next/image`, shadcn or the rest of the component tree. Nothing under
  * `lib/` imports from `components/`; the React half depends on this barrel,
  * never the other way round.
@@ -47,9 +51,11 @@ import { timelineBlockDefinition } from '@/lib/json-render/blocks/TimelineBlock.
 export const blockDefinitions = {
   BadgeBlock: badgeBlockDefinition,
   BarChartBlock: barChartBlockDefinition,
+  ButtonBlock: buttonBlockDefinition,
   CalloutBlock: calloutBlockDefinition,
   CardBlock: cardBlockDefinition,
   CarouselBlock: carouselBlockDefinition,
+  CodeBlock: codeBlockDefinition,
   DividerBlock: dividerBlockDefinition,
   GridBlock: gridBlockDefinition,
   HeadingBlock: headingBlockDefinition,
@@ -63,8 +69,10 @@ export const blockDefinitions = {
   MetricBlock: metricBlockDefinition,
   ProgressBlock: progressBlockDefinition,
   QuoteBlock: quoteBlockDefinition,
+  RatingBlock: ratingBlockDefinition,
   SegmentedBarBlock: segmentedBarBlockDefinition,
   StackBlock: stackBlockDefinition,
+  StepperBlock: stepperBlockDefinition,
   SuggestionChipBlock: suggestionChipBlockDefinition,
   TableBlock: tableBlockDefinition,
   TextBlock: textBlockDefinition,

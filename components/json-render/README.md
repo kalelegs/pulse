@@ -34,6 +34,10 @@ lib/json-render/                                 React-free, server-safe
     actions.ts             catalog action vocabulary
     safeUrl.ts             http(s)-only href guard (LinkBlock definition + component)
   catalog.ts    jsonRenderCatalog                (imports only blocks/index.ts)
+  validateSpec.ts      parseAndValidateSpec: tool arguments or a built spec -> validated spec
+  specChecks.ts        per-block props (null-filled, unknown keys named) + action binding checks
+  catalogReference.ts  buildCatalogReference(): the block list + guide + icons + actions text
+  compositionGuide.ts  COMPOSITION_GUIDE, the layout recipes inside that text
   iconNames.ts  ICON_NAMES, TIconName, iconEnum
   types.ts      TJsonRenderSpec, TJsonRenderAction (type-only)
 
@@ -44,32 +48,22 @@ components/json-render/                          'use client'
     dataTones.ts           the one dataToneEnum -> class map every data block uses
     chartScale.ts / chartFormat.ts / chartParts.tsx   range, unit and legend helpers for charts
   renderer.tsx             JsonRenderer: catalog + blockComponents
-  icons.ts                 icon name -> remixicon component map
-  BlockIcon.tsx            shared icon renderer
-  JsonRenderSurface.tsx    the public render surface
-  JsonRenderErrorBoundary.tsx
+  icons.ts / BlockIcon.tsx icon name -> remixicon component map, shared icon renderer
+  JsonRenderSurface.tsx    the public render surface (wraps JsonRenderErrorBoundary.tsx)
 ```
 
 ## Why the catalog and the renderer are separate
 
 `lib/json-render/catalog.ts` exists so that `jsonRenderCatalog.validate()` and
-the block vocabulary stay importable from server code (`tools/specSchema.ts`
-validates model-authored specs with it). None of that should drag `next/image`,
+the block vocabulary stay importable from server code (`validateSpec.ts`
+checks model-authored specs with it, from the client tool or a Server Action). None of that should drag `next/image`,
 shadcn or `'use client'` into a server bundle — so the catalog imports only
 `lib/json-render/blocks/index.ts`, which imports only `*.definition.ts` files.
-`prompt()` and `jsonSchema()` are deliberately unused; `tools/README.md`
-explains why.
+`prompt()` and `jsonSchema()` are deliberately unused (`tools/README.md` says why).
 
-That is why each block is two files in two trees: the `.definition.ts` half
-under `lib/` is pure zod and prose, the `.tsx` half under `components/` is JSX,
-and a `.tsx` never re-exports its definition, so server code cannot reach one
-through a `'use client'` module by accident.
-
-Each component is annotated `TBlockComponent<'Name'>` and `blocks/components.ts`
-is `TBlockComponents`, an exhaustive map over `keyof blockDefinitions`, so a
-block registered in one map and missing from the other, or a component that
-_demands_ a prop its definition lacks, fails to compile. It cannot catch a
-component that ignores a declared prop — consuming what you declare is on review.
+`blocks/components.ts` is typed `TBlockComponents`, an exhaustive map over
+`keyof blockDefinitions`, so a block missing from either map fails to compile.
+It cannot catch a component that ignores a declared prop — that is on review.
 
 ## Adding a new block
 
@@ -88,7 +82,9 @@ component that ignores a declared prop — consuming what you declare is on revi
    ```
 
    Optional props **must** use `.nullable()`, never `.optional()` — the catalog's
-   strict JSON schema mode requires it.
+   strict JSON schema mode requires it. `render_ui` fills omitted nullable keys
+   with null, so a model may leave them out; typed builders must not. Keep the
+   description and example domain-neutral: both are few-shot text for the model.
 
 2. `components/json-render/blocks/MyBlock.tsx`
 
@@ -106,47 +102,52 @@ component that ignores a declared prop — consuming what you declare is on revi
 3. Add one line to `lib/json-render/blocks/index.ts` (`MyBlock: myBlockDefinition`)
    and one line to `components/json-render/blocks/components.ts` (`MyBlock`).
 
-Nothing else changes — the catalog, `render_ui`'s vocabulary, the renderer and
-the builder all pick it up. Add it to `app/showcase/showcaseSections.ts` (or
-`showcaseDataSections.ts` for charts and narrative) so it stays visually covered.
+Nothing else changes — the catalog, `render_ui`'s vocabulary, the renderer and the
+builder all pick it up. Add it to an `app/showcase/showcase*Sections.ts` file and to the table below.
 
 ## Block vocabulary
 
-25 blocks in six families: layout, text, numbers, charts, narrative, and
-media/interaction. Charts are inline SVG or plain divs, no library.
+29 blocks in seven families: layout, text, numbers, charts, narrative, process,
+and media/interaction. Every container accepts any block as a child, including
+other containers. Charts are inline SVG or plain divs, no library.
 
-| Block                 | Slots   | Use for                                       |
-| --------------------- | ------- | --------------------------------------------- |
-| `StackBlock`          | default | row/column flow — the default container       |
-| `GridBlock`           | default | evenly sized tiles                            |
-| `DividerBlock`        | —       | section rule, optional label                  |
-| `CardBlock`           | default | bordered surface with title/description/icon  |
-| `CarouselBlock`       | default | horizontal snap strip                         |
-| `ListBlock`           | default | bulleted or numbered list                     |
-| `HeadingBlock`        | —       | section title + subtitle                      |
-| `TextBlock`           | —       | paragraph prose                               |
-| `TextBubbleBlock`     | —       | chat-transcript bubble                        |
-| `LabelBlock`          | —       | short caption / field label                   |
-| `MetricBlock`         | —       | headline number + unit + delta/trend          |
-| `KeyValueBlock`       | —       | one labelled fact                             |
-| `ProgressBlock`       | —       | 0–100 level bar                               |
-| `TableBlock`          | —       | small tabular data                            |
-| `LineChartBlock`      | —       | trend of one or more series; `sm` = sparkline |
-| `BarChartBlock`       | —       | a few categories on one measure               |
-| `SegmentedBarBlock`   | —       | how one whole splits into parts               |
-| `CalloutBlock`        | —       | tinted caveat / tip / warning                 |
-| `TimelineBlock`       | —       | dated entries down a vertical rail            |
-| `QuoteBlock`          | —       | attributed excerpt with source link           |
-| `BadgeBlock`          | —       | static status pill                            |
-| `SuggestionChipBlock` | —       | pressable follow-up                           |
-| `IconBlock`           | —       | standalone pictogram                          |
-| `ImageBlock`          | —       | remote image + caption                        |
-| `LinkBlock`           | —       | external hyperlink                            |
+| Block                 | Slots   | Use for                                          |
+| --------------------- | ------- | ------------------------------------------------ |
+| `StackBlock`          | default | row/column flow — the default container          |
+| `GridBlock`           | default | evenly sized tiles                               |
+| `DividerBlock`        | —       | section rule, optional label                     |
+| `CardBlock`           | default | bordered surface with title/description/icon     |
+| `CarouselBlock`       | default | horizontal snap strip                            |
+| `ListBlock`           | default | bulleted or numbered list (`items` + children)   |
+| `HeadingBlock`        | —       | section title + subtitle                         |
+| `TextBlock`           | —       | paragraph prose                                  |
+| `TextBubbleBlock`     | —       | chat-transcript bubble                           |
+| `LabelBlock`          | —       | short caption / field label                      |
+| `MetricBlock`         | —       | headline number + unit + delta/trend             |
+| `KeyValueBlock`       | —       | one labelled fact                                |
+| `ProgressBlock`       | —       | 0–100 level bar                                  |
+| `TableBlock`          | —       | small tabular data                               |
+| `LineChartBlock`      | —       | trend of one or more series; `sm` = sparkline    |
+| `BarChartBlock`       | —       | a few categories on one measure                  |
+| `SegmentedBarBlock`   | —       | how one whole splits into parts                  |
+| `CalloutBlock`        | default | tinted caveat / tip / warning, optional children |
+| `TimelineBlock`       | —       | dated entries down a vertical rail               |
+| `QuoteBlock`          | —       | attributed excerpt with source link              |
+| `CodeBlock`           | —       | preformatted monospace text                      |
+| `StepperBlock`        | —       | ordered steps with done/current/upcoming/blocked |
+| `RatingBlock`         | —       | score as filled symbols out of `max`             |
+| `BadgeBlock`          | —       | static status pill                               |
+| `SuggestionChipBlock` | —       | pressable follow-up prompt (binds `suggest`)     |
+| `ButtonBlock`         | —       | generic pressable, binds any action (`select`)   |
+| `IconBlock`           | —       | standalone pictogram                             |
+| `ImageBlock`          | —       | remote image + caption                           |
+| `LinkBlock`           | —       | external hyperlink                               |
 
 Actions: `suggest` (`{ text, value }`) and `select` (`{ value, label }`), plus the
 runtime built-ins `setState` / `pushState` / `removeState` / `validateForm` from
 `@json-render/react`'s schema (`validateForm` nominally — no inputs ship here).
-Bind them on the **element**, not in props:
+`SuggestionChipBlock` and `ButtonBlock` are the two pressables; bind actions on
+the **element**, not in props:
 
 ```json
 {
@@ -176,9 +177,8 @@ Guarantees:
   `jsonRenderCatalog.validate()`; a failure logs `console.warn` and renders
   `null` instead of throwing. While `loading` is true the spec is still
   streaming, so validation is advisory and the partial tree still renders. The
-  catalog check covers the element _envelope_ only and types `props` loosely;
-  per-block prop schemas and action bindings are enforced upstream, in
-  `tools/specSchema.ts` for model-authored specs and by the typed builders.
+  catalog check covers the element _envelope_ only; per-block prop schemas and
+  action bindings are enforced upstream (`lib/json-render/validateSpec.ts`, the builders).
 - **Unknown blocks are visible.** A hallucinated `type` renders a muted
   "Unsupported block: X" chip, never a blank hole.
 - **A bad spec cannot white-screen the app.** Everything renders inside

@@ -1,4 +1,5 @@
 import { block, buildSpec } from '@/lib/spec-builders/builder';
+import { controlSection, processSection } from '@/app/showcase/showcaseControlSections';
 import { chartSection, narrativeSection } from '@/app/showcase/showcaseDataSections';
 import {
   collectionSection,
@@ -35,10 +36,13 @@ export const createShowcaseSpec = (): TJsonRenderSpec =>
           ...chartSection(),
           divider('Narrative'),
           ...narrativeSection(),
+          divider('Process'),
+          ...processSection(),
           divider('Collections'),
           ...collectionSection(),
           divider('Follow ups'),
           ...followUpSection(),
+          ...controlSection(),
         ],
       },
     ),

@@ -5,6 +5,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 /** How close to the bottom still counts as "following the conversation". */
 const PINNED_THRESHOLD_PX = 48;
 
+/** A scroll this soon after an input event on the scroller was the user's doing. */
+const USER_SCROLL_WINDOW_MS = 500;
+
+/** The ways a person scrolls a box: wheel, touch, keyboard, or dragging its scrollbar. */
+const USER_INPUT_EVENTS = ['wheel', 'touchstart', 'touchmove', 'keydown', 'pointerdown'] as const;
+
 /** Walks up the DOM for the element that actually scrolls the list. */
 const findScrollParent = (node: HTMLElement | null): HTMLElement | null => {
   let current = node?.parentElement ?? null;
@@ -65,26 +71,63 @@ export const useAutoScroll = () => {
       return;
     }
 
+    // Scroll anchoring is the browser keeping the content under the reader still when something
+    // above it changes height. Here it fired a scroll event on its own — no user, no code — that
+    // left the list 61px from the bottom the instant a reply arrived, which read as "the user
+    // scrolled away" and unpinned the list for good. Only the user and `scrollToBottom` may move it.
+    const previousAnchor = scroller.style.overflowAnchor;
+    scroller.style.overflowAnchor = 'none';
+
+    // An absolutely positioned descendant — every `sr-only` label in the streaming cues — is laid
+    // out against the nearest *positioned* ancestor. If the scroller is not one, those labels
+    // escape it and stretch the document by the list's overflow, which is where the page-level
+    // scrollbar during a reply came from. Making the scroller the containing block keeps them in.
+    const previousPosition = scroller.style.position;
+    if (window.getComputedStyle(scroller).position === 'static') {
+      scroller.style.position = 'relative';
+    }
+
+    // Only the user may unpin. A scroll event also fires for our own `scrollTop` writes and for
+    // the browser clamping after a shrink, and by the time it is handled the list may have grown
+    // again — so neither "not at the bottom" nor "scrollTop went down" proves the reader left. An
+    // input event just before the scroll does. Anything else that leaves a pinned list off the
+    // bottom is content outrunning our scroll, and the list simply follows it once more.
+    let lastInputAt = 0;
+    const markInput = () => {
+      lastInputAt = performance.now();
+    };
     const onScroll = () => {
-      const distanceToBottom = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight;
-      setPinned(distanceToBottom <= PINNED_THRESHOLD_PX);
+      const { scrollTop, scrollHeight, clientHeight } = scroller;
+      const distanceToBottom = scrollHeight - scrollTop - clientHeight;
+      if (distanceToBottom <= PINNED_THRESHOLD_PX) {
+        setPinned(true);
+      } else if (performance.now() - lastInputAt < USER_SCROLL_WINDOW_MS) {
+        setPinned(false);
+      } else if (isPinnedRef.current) {
+        scroller.scrollTop = scrollHeight;
+      }
     };
 
-    let lastHeight = list.getBoundingClientRect().height;
+    // Any size change, of the list or of the scroller itself (a composer appearing, a window
+    // resize), moves the bottom; while pinned the list follows it every time.
     const observer = new ResizeObserver(() => {
-      const height = list.getBoundingClientRect().height;
-      const hasGrown = height > lastHeight;
-      lastHeight = height;
-      if (hasGrown && isPinnedRef.current) {
+      if (isPinnedRef.current) {
         scroller.scrollTop = scroller.scrollHeight;
       }
     });
 
     scroller.addEventListener('scroll', onScroll, { passive: true });
+    USER_INPUT_EVENTS.forEach((type) =>
+      scroller.addEventListener(type, markInput, { passive: true }),
+    );
     observer.observe(list);
+    observer.observe(scroller);
 
     return () => {
+      scroller.style.overflowAnchor = previousAnchor;
+      scroller.style.position = previousPosition;
       scroller.removeEventListener('scroll', onScroll);
+      USER_INPUT_EVENTS.forEach((type) => scroller.removeEventListener(type, markInput));
       observer.disconnect();
     };
   }, [setPinned]);

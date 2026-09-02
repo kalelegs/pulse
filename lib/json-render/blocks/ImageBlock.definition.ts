@@ -15,7 +15,7 @@ export const imageBlockDefinition = defineBlock({
   example: {
     src: 'https://images.unsplash.com/photo-1526498460520-4c246339dccb?w=800',
     alt: 'Sunlit clouds over a city skyline',
-    caption: 'Conditions this afternoon',
+    caption: 'The skyline from the rooftop bar',
     width: 480,
     height: 270,
   },

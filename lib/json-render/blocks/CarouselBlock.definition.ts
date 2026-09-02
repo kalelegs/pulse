@@ -8,6 +8,6 @@ export const carouselBlockDefinition = defineBlock({
   }),
   slots: ['default'],
   description:
-    'Horizontally scrolling strip with snap points. Use it for a row of peer items that will not fit across the surface — hourly or daily forecast cells, product tiles, option cards. Use `sm` itemWidth for compact cells.',
-  example: { title: 'Next 7 days', itemWidth: 'sm' },
+    'Horizontally scrolling strip with snap points. Use it for a row of peer items that will not fit across the surface — day-by-day cells, product tiles, option cards. Any block can be a slide, including CardBlock. Use `sm` itemWidth for compact cells.',
+  example: { title: 'Nearby options', itemWidth: 'md' },
 });

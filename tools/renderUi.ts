@@ -2,7 +2,7 @@
 
 import { tool } from '@openai/agents';
 import { attachSpecToReply } from '@/tools/attachSpec';
-import { buildCatalogReference } from '@/tools/catalogReference';
+import { buildCatalogReference } from '@/lib/json-render/catalogReference';
 import { toJsonRenderSpec, uiSpecParameters } from '@/tools/specSchema';
 
 const USAGE = [

@@ -34,13 +34,9 @@ export const contentSection = (): TSpecNode[] => [
 ];
 
 /**
- * Metrics, key/value rows, progress and tables.
- *
- * Both metric sizes are still covered, but on separate rows: an `lg` metric next
- * to two `md` ones in a single grid row sets three numbers at three different
- * heights, which reads as a layout bug rather than as size coverage. Giving the
- * `lg` metric its own row is also how an agent should use it — one headline
- * number, with the supporting ones beneath.
+ * Metrics, key/value rows, progress and tables. The `lg` metric gets its own
+ * row: beside two `md` ones it sets three numbers at three heights, which reads
+ * as a bug — and one headline number above the rest is how an agent should use it.
  */
 export const dataSection = (): TSpecNode[] => [
   block('MetricBlock', {
@@ -105,19 +101,27 @@ export const dataSection = (): TSpecNode[] => [
   }),
 ];
 
-const listItem = (text: string): TSpecNode =>
-  block('TextBlock', { text, tone: null, size: 'sm', align: null });
-
-/** Lists, carousels, media and chat bubbles. */
+/** Lists, carousels, media and chat bubbles. The list mixes plain `items` with one block child. */
 export const collectionSection = (): TSpecNode[] => [
   block(
     'ListBlock',
-    { title: 'When to reach for what', ordered: false },
+    {
+      title: 'When to reach for what',
+      ordered: false,
+      items: [
+        'StackBlock for anything that flows in one direction.',
+        'GridBlock for evenly sized tiles.',
+        'CarouselBlock when a row will not fit.',
+      ],
+    },
     {
       children: [
-        listItem('StackBlock for anything that flows in one direction.'),
-        listItem('GridBlock for evenly sized tiles.'),
-        listItem('CarouselBlock when a row will not fit.'),
+        block('LinkBlock', {
+          href: 'https://github.com/vercel-labs/json-render',
+          text: 'A child element becomes one more bullet',
+          newTab: true,
+          icon: 'external-link',
+        }),
       ],
     },
   ),

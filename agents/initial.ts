@@ -22,7 +22,7 @@ import { TSessionContext } from '@/types';
  * costs connect latency on every session. The full block vocabulary therefore
  * lives in the `render_ui` tool's own description, not here — this prompt only
  * has to teach *when* to reach for a visual answer, which is a few hundred
- * characters. See `tools/catalogReference.ts` for the measurements.
+ * characters. See `lib/json-render/catalogReference.ts` for the measurements.
  *
  * The same economy applies to handoffs: this prompt names no specialist. The
  * SDK builds a `transfer_to_<name>` tool for every agent in `handoffs`, each

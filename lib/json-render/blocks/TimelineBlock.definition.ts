@@ -24,19 +24,19 @@ export const timelineBlockDefinition = defineBlock({
   example: {
     items: [
       {
-        title: 'Apple unveils new MacBook line',
-        description: 'Shares rose 2% after the announcement.',
+        title: 'Order shipped',
+        description: 'Left the warehouse; tracking is live.',
         time: '2h ago',
-        href: 'https://www.apple.com/newsroom/',
-        icon: 'news',
+        href: 'https://example.com/track/1234',
+        icon: 'bag',
         tone: 'primary',
       },
       {
-        title: 'Q2 earnings beat estimates',
+        title: 'Order confirmed',
         description: null,
         time: 'Yesterday',
         href: null,
-        icon: 'chart-line',
+        icon: 'check-circle',
         tone: 'success',
       },
     ],

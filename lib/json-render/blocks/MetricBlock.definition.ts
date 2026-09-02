@@ -14,14 +14,14 @@ export const metricBlockDefinition = defineBlock({
   }),
   slots: [],
   description:
-    'Headline number with a caption — temperature, price, score, count. Pre-format `value` as a display string and put the symbol in `unit`. Add `delta` plus `trend` to show change against a baseline.',
+    'Headline number with a caption — a total, a price, a score, a reading. Pre-format `value` as a display string and put the symbol in `unit`. Add `delta` plus `trend` to show change against a baseline.',
   example: {
-    label: 'Feels like 66°',
-    value: '68',
-    unit: '°F',
-    delta: '+4° vs yesterday',
+    label: 'Steps today',
+    value: '8,420',
+    unit: 'steps',
+    delta: '+12% vs last week',
     trend: 'up',
-    icon: 'sun',
+    icon: 'flash',
     size: 'lg',
   },
 });

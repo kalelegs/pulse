@@ -11,9 +11,9 @@ export const suggestionChipBlockDefinition = defineBlock({
   }),
   slots: [],
   description:
-    'Pressable pill offering the user a follow-up. Bind it on the ELEMENT (not in props) with on.press, e.g. "on": { "press": { "action": "suggest", "params": { "text": "Show the hourly forecast" } } }. Without an on.press binding it renders as a static pill.',
+    'Pressable pill offering the user a follow-up. Bind it on the ELEMENT (not in props) with on.press, e.g. "on": { "press": { "action": "suggest", "params": { "text": "Compare the other two" } } }. Without an on.press binding it renders as a static pill.',
   example: {
-    text: 'Show the hourly forecast',
+    text: 'Compare the other two',
     hint: 'Sends this as your next message',
     tone: 'outline',
     icon: 'sparkles',

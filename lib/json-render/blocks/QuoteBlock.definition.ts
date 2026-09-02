@@ -15,9 +15,9 @@ export const quoteBlockDefinition = defineBlock({
   description:
     'Pull quote or excerpt with attribution — an analyst comment, a review, a line from an article, a testimonial. Use it for words someone else said; use CalloutBlock for your own notes.',
   example: {
-    text: 'Services growth continues to offset softer hardware demand.',
-    attribution: 'Morgan Stanley analyst note',
-    source: 'Reuters',
-    href: 'https://www.reuters.com/',
+    text: 'Setup took ten minutes and it has not needed attention since.',
+    attribution: 'A verified customer',
+    source: 'Product reviews',
+    href: 'https://example.com/reviews',
   },
 });

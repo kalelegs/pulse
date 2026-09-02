@@ -20,11 +20,11 @@ export const barChartBlockDefinition = defineBlock({
   }),
   slots: [],
   description:
-    'Bar chart comparing a handful of categories on one measure — market caps, scores, counts. Values are numeric so the bars scale; put the human-readable form in `display`. Horizontal is the default and reads best for labels longer than a word.',
+    'Bar chart comparing a handful of categories on one measure — counts, scores, totals per category. Values are numeric so the bars scale; put the human-readable form in `display`. Horizontal is the default and reads best for labels longer than a word.',
   example: {
     items: [
-      { label: 'Apple', value: 3100, display: '$3.1T', tone: 'primary' },
-      { label: 'Amazon', value: 2000, display: '$2.0T', tone: 'muted' },
+      { label: 'Engineering', value: 30, display: '30 tasks', tone: 'primary' },
+      { label: 'Design', value: 12, display: '12 tasks', tone: 'muted' },
     ],
     orientation: 'horizontal',
     max: null,

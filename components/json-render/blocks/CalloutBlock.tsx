@@ -1,5 +1,6 @@
 'use client';
 
+import { Children } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import BlockIcon from '@/components/json-render/BlockIcon';
@@ -29,8 +30,10 @@ type TTone = keyof typeof TONES;
 const resolveTone = (tone: unknown): TTone =>
   typeof tone === 'string' && tone in TONES ? (tone as TTone) : 'info';
 
-export const CalloutBlock: TBlockComponent<'CalloutBlock'> = ({ props, loading }) => {
+export const CalloutBlock: TBlockComponent<'CalloutBlock'> = ({ props, children, loading }) => {
   const tone = TONES[resolveTone(props.tone)];
+  // Children are optional; only reserve space beneath the text when there are any.
+  const hasChildren = Children.toArray(children).length > 0;
 
   if (loading) {
     return <Skeleton className="h-14 w-full" />;
@@ -39,9 +42,10 @@ export const CalloutBlock: TBlockComponent<'CalloutBlock'> = ({ props, loading }
   return (
     <div className={cn('flex w-full gap-3 rounded-lg border p-3 text-sm', tone.box)} role="note">
       <BlockIcon className={cn('mt-0.5 size-4 shrink-0', tone.icon)} name={props.icon} />
-      <div className="min-w-0 space-y-0.5">
+      <div className="min-w-0 flex-1 space-y-0.5">
         {props.title ? <p className="text-foreground font-medium">{props.title}</p> : null}
         <p className={props.title ? 'text-muted-foreground' : 'text-foreground'}>{props.text}</p>
+        {hasChildren ? <div className="space-y-2 pt-2">{children}</div> : null}
       </div>
     </div>
   );
