@@ -13,19 +13,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Pulse: Realtime AI Assistant',
-  description:
-    'A reference implementation of how multi agent real time AI assistant should be built',
+  title: 'Pulse',
+  description: 'Realtime AI assistant reference architecture',
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html lang="en" className="dark">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>{children}</body>
-    </html>
-  );
-}
+const RootLayout = ({ children }: Readonly<{ children: React.ReactNode }>) => (
+  <html lang="en" className="dark">
+    <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>{children}</body>
+  </html>
+);
+
+export default RootLayout;

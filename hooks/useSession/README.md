@@ -1,25 +1,25 @@
 # useSession Hook
 
-This hook creates a new session
+Owns one realtime session at a time: the microphone, the `RealtimeSession`, and the callbacks the
+app hangs off it.
 
 ## Files
 
-| File          | Purpose                                           |
-| ------------- | ------------------------------------------------- |
-| useSession.ts | Creates a new session                             |
-| fns.ts        | Contains utility functions for session management |
+| File               | Purpose                                                                                   |
+| ------------------ | ----------------------------------------------------------------------------------------- |
+| `useSession.ts`    | The hook: connect / disconnect / toggle, `sendMessage`, and the refs that outlive renders |
+| `createSession.ts` | Builds and connects a `RealtimeSession` (with a connect timeout), plus `closeSession`     |
+| `microphone.ts`    | Acquires the microphone with a permission timeout and precise errors; `stopMediaStream`   |
 
 ## Session configuration
 
 `createSession` passes an explicit `config.audio.input.transcription` to `RealtimeSession`, and
 `actions/getEphemeralToken` asks the client-secrets endpoint for the same thing. That repetition is
-load-bearing, not an oversight: the transport sends a `session.update` as soon as the data channel
-opens, and it fills every `audio.input` field the app left `undefined` from its own
-`DEFAULT_OPENAI_REALTIME_SESSION_CONFIG` (`@openai/agents-realtime/dist/openaiRealtimeBase.mjs`).
-Configuring only the token would therefore be overwritten before the first word is spoken, and
-configuring only the session would leave the minted session briefly disagreeing with it. Both read
-`TRANSCRIPTION_MODEL` / `TRANSCRIPTION_LANGUAGE` from `lib/utils`, so they cannot drift — the same
-reason `REALTIME_MODEL` lives there.
+load-bearing: the transport sends a `session.update` as soon as the data channel opens, filling
+every `audio.input` field the app left `undefined` from its own
+`DEFAULT_OPENAI_REALTIME_SESSION_CONFIG` (`@openai/agents-realtime/dist/openaiRealtimeBase.mjs`),
+so configuring only the token would be overwritten before the first word is spoken. Both read the
+values from `lib/realtimeConfig.ts`, which also explains why the transcription model is pinned.
 
 ## `onHistoryUpdated`
 

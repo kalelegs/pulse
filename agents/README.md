@@ -8,12 +8,14 @@ voice, an instruction builder and a set of tools.
 `instructions` is a function, not a string, so it can read the session context:
 
 ```ts
-const buildInstructions = (runContext: RunContext<TSessionContext>) => `…`;
+const buildInstructions = (runContext: RunContext<TSessionContext>): string =>
+  [RECOMMENDED_PROMPT_PREFIX, '…', ...preferenceLines(runContext.context.preferences)].join('\n');
 ```
 
 `runContext.context` is the `TSessionContext` passed when the session is created
 — currently the user's name and their preference list, both interpolated by
-`initial.ts`.
+`initial.ts`. The prompt is assembled from an array of lines rather than a
+template literal, so source indentation is never sent to the model.
 
 ## Instruction budget
 

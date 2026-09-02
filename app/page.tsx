@@ -1,5 +1,5 @@
-import RealTimeExperience from '@/components/RealtimeExperience';
+import RealtimeExperience from '@/components/RealtimeExperience';
 
-export default function Page() {
-  return <RealTimeExperience />;
-}
+const Page = () => <RealtimeExperience />;
+
+export default Page;

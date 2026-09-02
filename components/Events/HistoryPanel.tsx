@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { RiEyeLine, RiPlugLine } from '@remixicon/react';
-import { useChatStore } from '@/hooks';
+import { useEventLogStore } from '@/hooks';
 import HistoryItemCard from './HistoryItemCard';
 import { describeHistoryItem } from './historyItems';
 
@@ -31,8 +31,8 @@ const Note = () => (
  * view broke, the conversation would be unaffected.
  */
 const HistoryPanel = ({ isConnected }: THistoryPanelProps) => {
-  const history = useChatStore((state) => state.sdkHistory);
-  const updates = useChatStore((state) => state.sdkHistoryUpdates);
+  const history = useEventLogStore((state) => state.sdkHistory);
+  const updates = useEventLogStore((state) => state.sdkHistoryUpdates);
 
   const items = useMemo(() => history.map(describeHistoryItem), [history]);
   const flagged = items.filter((item) => item.note !== undefined).length;

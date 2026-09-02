@@ -7,10 +7,8 @@ import { Input } from '@/components/ui/input';
 import EventCard from './EventCard';
 import EventFilterBar from './EventFilterBar';
 import EventsEmptyState from './EventsEmptyState';
-import { useChatAutoScroll } from '@/components/Chat/useChatAutoScroll';
-import { useChatStore } from '@/hooks';
-import { EVENT_LOG_LIMIT } from '@/hooks/useChatStore/useChatStore';
-import { TRenderedEvent } from './renderers/types';
+import { EVENT_LOG_LIMIT, useAutoScroll, useEventLogStore } from '@/hooks';
+import { TRenderedEvent } from '@/types';
 import { useEventFilters } from './useEventFilters';
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -35,13 +33,13 @@ const EventList = () => {
   const copyFlashRef = useRef<number | undefined>(undefined);
   // Same pinned-detection the chat column uses: it discovers its scroller by walking up the DOM,
   // so the only thing this list has to do is hand it the growing element.
-  const { listRef, isPinned, scrollToBottom } = useChatAutoScroll();
+  const { listRef, isPinned, scrollToBottom } = useAutoScroll();
 
-  const events = useChatStore((state) => state.events);
-  const renderToolCalls = useChatStore((state) => state.renderToolCalls);
-  const clearEvents = useChatStore((state) => state.clearEvents);
-  const hiddenCategories = useChatStore((state) => state.hiddenEventCategories);
-  const setHiddenCategories = useChatStore((state) => state.setHiddenEventCategories);
+  const events = useEventLogStore((state) => state.events);
+  const renderToolCalls = useEventLogStore((state) => state.renderToolCalls);
+  const clearEvents = useEventLogStore((state) => state.clearEvents);
+  const hiddenCategories = useEventLogStore((state) => state.hiddenEventCategories);
+  const setHiddenCategories = useEventLogStore((state) => state.setHiddenEventCategories);
 
   const { visibleEvents, countsByCategory, hiddenByCategoryCount, hiddenByToolFilterCount } =
     useEventFilters({ events, hiddenCategories, renderToolCalls, searchQuery });
@@ -152,7 +150,7 @@ const EventList = () => {
             visibleEvents.map((event) => (
               <EventCard
                 key={event.id}
-                incomingEvent={event}
+                event={event}
                 copied={copiedId === event.id}
                 expanded={expandedIds.includes(event.id)}
                 onToggleExpand={onToggleExpand}

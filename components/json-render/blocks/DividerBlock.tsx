@@ -1,14 +1,10 @@
 'use client';
 
-import type { BaseComponentProps } from '@json-render/react';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { TBlockProps } from '@/components/json-render/blocks';
+import type { TBlockComponent } from '@/lib/json-render/blocks';
 
-export const DividerBlock = ({
-  props,
-  loading,
-}: BaseComponentProps<TBlockProps<'DividerBlock'>>) => {
+export const DividerBlock: TBlockComponent<'DividerBlock'> = ({ props, loading }) => {
   if (props.orientation === 'vertical') {
     return <Separator orientation="vertical" className="mx-1 self-stretch" />;
   }

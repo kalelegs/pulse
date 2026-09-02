@@ -1,5 +1,5 @@
 import { bind, block, type TSpecNode } from '@/lib/spec-builders/builder';
-import type { TForecastDay, TWeatherReport } from '@/lib/weather/types';
+import type { TForecastDay, TWeatherReport } from '@/lib/weather';
 
 /** Reads the "feels like" delta as an icon, so the card says warmer/colder without words. */
 const feelsLikeIcon = (report: TWeatherReport) => {

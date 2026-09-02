@@ -42,10 +42,6 @@ export const temperatureSymbol = (unit: TTemperatureUnit): string =>
 export const windUnitFor = (unit: TTemperatureUnit): string =>
   unit === 'celsius' ? 'km/h' : 'mph';
 
-/** The `wind_speed_unit` query value Open-Meteo expects for a temperature scale. */
-export const windSpeedParam = (unit: TTemperatureUnit): string =>
-  unit === 'celsius' ? 'kmh' : 'mph';
-
 const WEEKDAY_FORMAT = new Intl.DateTimeFormat('en-US', { weekday: 'short', timeZone: 'UTC' });
 
 /**

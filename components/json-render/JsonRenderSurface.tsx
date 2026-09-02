@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import type { ComponentRenderProps } from '@json-render/react';
 import { cn } from '@/lib/utils';
 import { jsonRenderCatalog } from '@/lib/json-render/catalog';
-import { JsonRenderer } from '@/lib/json-render/registry';
+import { JsonRenderer } from '@/components/json-render/renderer';
 import JsonRenderErrorBoundary from '@/components/json-render/JsonRenderErrorBoundary';
 import type { TJsonRenderAction, TJsonRenderSpec } from '@/lib/json-render/types';
 

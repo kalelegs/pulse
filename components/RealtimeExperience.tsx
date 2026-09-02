@@ -3,20 +3,26 @@
 import EventsPanel from '@/components/Events/EventsPanel';
 import ConnectButton from '@/components/ConnectButton';
 import { useMemo, useRef } from 'react';
-import { useSession, useCustomerContext, useChatStore, chatMessageSink } from '@/hooks';
+import {
+  useSession,
+  useCustomerContext,
+  useChatStore,
+  useEventLogStore,
+  chatMessageSink,
+} from '@/hooks';
 import SettingsPanel from '@/components/SettingsPanel';
 import { createSpecActionHandler, MessageList } from '@/components/Chat';
+import { createMessageExtractor } from '@/lib/EventProcessor';
+import { logTransportEvent } from '@/lib/events/logTransportEvent';
 
-import { createMessageExtractor, processEvent } from '@/lib/EventProcessor';
-
-const RealTimeExperience = () => {
+const RealtimeExperience = () => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const context = useCustomerContext();
-  const addEvent = useChatStore((state) => state.addEvent);
-  const eventsLogLevel = useChatStore((state) => state.eventsLogLevel);
   const resetChat = useChatStore((state) => state.reset);
-  const setSdkHistory = useChatStore((state) => state.setSdkHistory);
-  const resetSdkHistory = useChatStore((state) => state.resetSdkHistory);
+  const addEvent = useEventLogStore((state) => state.addEvent);
+  const eventsLogLevel = useEventLogStore((state) => state.eventsLogLevel);
+  const setSdkHistory = useEventLogStore((state) => state.setSdkHistory);
+  const resetSdkHistory = useEventLogStore((state) => state.resetSdkHistory);
   // The extractor carries per-turn state, so it has to outlive renders. `chatMessageSink` reads
   // the store lazily, which keeps this stable for the lifetime of the page.
   const messageExtractor = useMemo(() => createMessageExtractor(chatMessageSink), []);
@@ -45,13 +51,13 @@ const RealTimeExperience = () => {
       messageExtractor.reset();
     },
     // Two independent consumers of the same event, guarded independently and in that order of
-    // importance. The debug renderer runs first and is the one that could plausibly throw (24
-    // per-event renderers reaching into loosely typed payloads); the extractor behind it owns the
-    // transcript. One `try` around both would let a cosmetic renderer bug silently starve the
+    // importance. The debug renderer runs first and is the one that could plausibly throw (one
+    // renderer per event type reaching into loosely typed payloads); the extractor behind it owns
+    // the transcript. One `try` around both would let a cosmetic renderer bug silently starve the
     // conversation the user is actually reading, so each gets its own.
     onTransportEvent: (te) => {
       try {
-        processEvent(te, addEvent, eventsLogLevel);
+        logTransportEvent(te, addEvent, eventsLogLevel);
       } catch (error) {
         console.error('failed to render transport event for the debug panel', te, error);
       }
@@ -61,8 +67,7 @@ const RealTimeExperience = () => {
         console.error('failed to extract messages from transport event', te, error);
       }
     },
-    // Debug only, and a strict dead end: the SDK's history is mirrored into the store for the
-    // Events panel to display and is never read back into the transcript or the extractor.
+    // Debug mirror only, never read back into the transcript: lib/EventProcessor/SdkHistory.md.
     onHistoryUpdated: setSdkHistory,
   });
 
@@ -80,8 +85,8 @@ const RealTimeExperience = () => {
       <section className="shrink-0 rounded-md border px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="my-2 text-lg font-bold">Pulse: JSON Rendering Playground</h1>
-            <h2>Modular generic components rendered from JSON specs.</h2>
+            <h1 className="my-2 text-lg font-bold">Pulse</h1>
+            <h2>Realtime AI assistant reference architecture</h2>
           </div>
           <div className="flex flex-col items-end gap-2">
             <div className="flex items-center gap-2">
@@ -111,4 +116,4 @@ const RealTimeExperience = () => {
   );
 };
 
-export default RealTimeExperience;
+export default RealtimeExperience;

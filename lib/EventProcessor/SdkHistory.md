@@ -12,7 +12,7 @@ This is a decision about the **transcript**. History is still worth reading — 
 
 ### 1. History has zero streaming resolution
 
-Replaying the 184 captured transport events in `events.log.json` through the SDK's own
+Replaying the 184 captured transport events in `docs/fixtures/events.log.json` through the SDK's own
 `updateRealtimeHistory` produces **19 history mutations, of which only 6 change rendered text**.
 All 106 assistant transcript deltas and all 7 user transcription deltas produce **no** history
 change at all.
@@ -98,5 +98,6 @@ predicted. Answering it needs someone to interrupt a reply mid-sentence with the
 
 ## See also
 
-- [`EventTypes.md`](./EventTypes.md) — the transport event order the extractor is built on.
+- [`components/Chat/README.md`](../../components/Chat/README.md) — the transport events the
+  extractor is built on, per role, and what each one does to the transcript.
 - [`components/Events/README.md`](../../components/Events/README.md) — the debug panel.

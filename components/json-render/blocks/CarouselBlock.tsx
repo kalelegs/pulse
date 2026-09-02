@@ -1,11 +1,10 @@
 'use client';
 
 import { Children, isValidElement, type ReactNode } from 'react';
-import type { BaseComponentProps } from '@json-render/react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useScrollableRight } from '@/components/json-render/useScrollableRight';
-import type { TBlockProps } from '@/components/json-render/blocks';
+import type { TBlockComponent } from '@/lib/json-render/blocks';
 
 const ITEM_WIDTHS = { sm: 'min-w-28', md: 'min-w-60', lg: 'min-w-80' } as const;
 
@@ -29,11 +28,7 @@ const wrapChildrenInSlides = (children: ReactNode, widthClass: string) =>
     </div>
   ));
 
-export const CarouselBlock = ({
-  props,
-  children,
-  loading,
-}: BaseComponentProps<TBlockProps<'CarouselBlock'>>) => {
+export const CarouselBlock: TBlockComponent<'CarouselBlock'> = ({ props, children, loading }) => {
   const { ref, canScrollRight } = useScrollableRight<HTMLDivElement>();
 
   return (

@@ -29,19 +29,44 @@ export const DEFAULT_COUNTRY_CODE = 'US';
  */
 const PREFERENCE_POPULATION_RATIO = 0.25;
 
-/** Lowercases and strips accents so "San José" and "San Jose" compare equal. */
-const normalise = (value: string): string =>
-  value.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+/**
+ * Region inputs this short are codes ("CA", "IN", "UK"), not names, and a code
+ * must match exactly. Prefix matching would let "IN" (Indiana) match "India".
+ */
+const MAX_CODE_LENGTH = 3;
 
+/**
+ * Lowercases and strips accents so "San José" and "San Jose" compare equal.
+ * The range is the Unicode combining diacritical marks block (U+0300-U+036F).
+ */
+const normalise = (value: string): string =>
+  value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+
+/**
+ * True when the candidate's state, country or country code names `region`.
+ *
+ * Short inputs are treated as codes and must match exactly. Longer inputs may
+ * be a prefix of the candidate ("Calif" → "California") or vice versa
+ * ("United States of America" → "United States").
+ */
 const matchesRegion = (match: TGeocodingMatch, region: string): boolean => {
   const target = normalise(region);
+  const isCode = target.length <= MAX_CODE_LENGTH;
 
   return [match.admin1, match.country, match.country_code]
     .filter((value): value is string => Boolean(value))
     .some((value) => {
       const candidate = normalise(value);
 
-      return candidate === target || candidate.startsWith(target) || target.startsWith(candidate);
+      if (candidate === target) {
+        return true;
+      }
+
+      return !isCode && (candidate.startsWith(target) || target.startsWith(candidate));
     });
 };
 
@@ -58,7 +83,9 @@ export const isSameName = (match: TGeocodingMatch, city: string): boolean =>
 /**
  * Picks the candidate the user most likely meant.
  *
- * 1. An explicit region wins outright — "Santa Clara, Cuba" must resolve to Cuba.
+ * 1. An explicit region wins outright — "Santa Clara, Cuba" must resolve to
+ *    Cuba. When nothing matches the region there is no answer: "Springfield,
+ *    Oregon" must not quietly become Springfield, Illinois.
  * 2. Otherwise the top candidate in the preferred country wins, but only when
  *    it is a comparably prominent place (see `PREFERENCE_POPULATION_RATIO`).
  * 3. Otherwise the provider's own ranking stands.
@@ -66,6 +93,7 @@ export const isSameName = (match: TGeocodingMatch, city: string): boolean =>
  * @param matches Candidates in provider rank order.
  * @param city The place name as the user said it.
  * @param region Optional state / province / country qualifier from the caller.
+ * @returns The chosen candidate, or `undefined` when none fits the query.
  */
 export const chooseMatch = (
   matches: TGeocodingMatch[],
@@ -79,7 +107,7 @@ export const chooseMatch = (
   }
 
   if (region) {
-    return matches.find((match) => matchesRegion(match, region)) ?? best;
+    return matches.find((match) => matchesRegion(match, region));
   }
 
   const preferred = matches.find(

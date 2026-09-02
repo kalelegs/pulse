@@ -1,6 +1,6 @@
 'use client';
 
-import { blockActions, blockDefinitions, ICON_NAMES } from '@/components/json-render/blocks';
+import { blockActions, blockDefinitions, ICON_NAMES } from '@/lib/json-render/blocks';
 
 /** `container` blocks accept children; `leaf` blocks never do. */
 const kindOf = (slots: string[]): string => (slots.length ? 'container' : 'leaf');

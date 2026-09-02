@@ -18,6 +18,41 @@ export type TGeocodeResult =
 const describeMatch = (match: TGeocodingMatch): string =>
   [match.name, match.admin1, match.country].filter(Boolean).join(', ');
 
+/** A candidate with the coordinates a forecast request needs. */
+type TLocatedMatch = TGeocodingMatch & { latitude: number; longitude: number };
+
+const hasCoordinates = (match: TGeocodingMatch | undefined): match is TLocatedMatch =>
+  typeof match?.latitude === 'number' && typeof match?.longitude === 'number';
+
+/**
+ * Shapes the chosen candidate into the location a report carries.
+ *
+ * Pure — the fetch happens in `geocodeCity` — so the mapping can be checked
+ * against hand-written candidate lists without mocking the network.
+ *
+ * @param chosen The candidate `chooseMatch` picked.
+ * @param matches Every candidate the provider returned, in rank order.
+ * @param query The place name as the user said it; the fallback display name.
+ */
+export const toLocation = (
+  chosen: TLocatedMatch,
+  matches: TGeocodingMatch[],
+  query: string,
+): TWeatherLocation => ({
+  name: chosen.name ?? query,
+  region: chosen.admin1 ?? null,
+  country: chosen.country ?? null,
+  latitude: chosen.latitude,
+  longitude: chosen.longitude,
+  timezone: chosen.timezone ?? null,
+  // Only rival readings of the same name count as ambiguity — a search for
+  // "Santa Clara" also returns "Santa Clara La Laguna", which is not one.
+  alternatives: matches
+    .filter((match) => match !== chosen && isSameName(match, query))
+    .map(describeMatch)
+    .filter(Boolean),
+});
+
 /**
  * Resolves a place name to coordinates via Open-Meteo's keyless geocoding API.
  *
@@ -57,7 +92,7 @@ export const geocodeCity = async (
   const matches = response.data.results ?? [];
   const chosen = chooseMatch(matches, trimmed, region);
 
-  if (!chosen || typeof chosen.latitude !== 'number' || typeof chosen.longitude !== 'number') {
+  if (!hasCoordinates(chosen)) {
     return {
       ok: false,
       code: EWeatherErrorCode.NOT_FOUND,
@@ -65,21 +100,5 @@ export const geocodeCity = async (
     };
   }
 
-  return {
-    ok: true,
-    location: {
-      name: chosen.name ?? trimmed,
-      region: chosen.admin1 ?? null,
-      country: chosen.country ?? null,
-      latitude: chosen.latitude,
-      longitude: chosen.longitude,
-      timezone: chosen.timezone ?? 'auto',
-      // Only rival readings of the same name count as ambiguity — a search for
-      // "Santa Clara" also returns "Santa Clara La Laguna", which is not one.
-      alternatives: matches
-        .filter((match) => match !== chosen && isSameName(match, trimmed))
-        .map(describeMatch)
-        .filter(Boolean),
-    },
-  };
+  return { ok: true, location: toLocation(chosen, matches, trimmed) };
 };

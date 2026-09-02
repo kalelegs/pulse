@@ -1,10 +1,9 @@
 'use client';
 
-import type { BaseComponentProps } from '@json-render/react';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import type { TBlockProps } from '@/components/json-render/blocks';
+import type { TBlockComponent } from '@/lib/json-render/blocks';
 
 const TONES = {
   default: '[&_[data-slot=progress-indicator]]:bg-primary',
@@ -13,10 +12,7 @@ const TONES = {
   destructive: '[&_[data-slot=progress-indicator]]:bg-destructive',
 } as const;
 
-export const ProgressBlock = ({
-  props,
-  loading,
-}: BaseComponentProps<TBlockProps<'ProgressBlock'>>) => {
+export const ProgressBlock: TBlockComponent<'ProgressBlock'> = ({ props, loading }) => {
   const value = Math.min(100, Math.max(0, props.value ?? 0));
 
   if (loading) {

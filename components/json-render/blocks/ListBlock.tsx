@@ -1,9 +1,8 @@
 'use client';
 
 import { Children, isValidElement, type ReactNode } from 'react';
-import type { BaseComponentProps } from '@json-render/react';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { TBlockProps } from '@/components/json-render/blocks';
+import type { TBlockComponent } from '@/lib/json-render/blocks';
 
 /**
  * `<ul>`/`<ol>` may only contain `<li>`, but the renderer hands us arbitrary
@@ -15,11 +14,7 @@ const wrapChildrenInItems = (children: ReactNode) =>
     <li key={isValidElement(child) && child.key ? child.key : `item-${index}`}>{child}</li>
   ));
 
-export const ListBlock = ({
-  props,
-  children,
-  loading,
-}: BaseComponentProps<TBlockProps<'ListBlock'>>) => {
+export const ListBlock: TBlockComponent<'ListBlock'> = ({ props, children, loading }) => {
   const ListTag = props.ordered === true ? 'ol' : 'ul';
 
   return (

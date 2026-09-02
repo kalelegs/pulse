@@ -1,8 +1,8 @@
 'use client';
 
 import { useMemo } from 'react';
-import { EEventCategory, EVENT_CATEGORIES, getEventCategory } from './categories';
-import { TRenderedEvent } from './renderers/types';
+import { getEventCategory, isToolCallEvent } from '@/lib/events/categories';
+import { EEventCategory, TRenderedEvent } from '@/types';
 
 /**
  * Lowercased searchable text per event, built once and kept for as long as the event object is
@@ -22,23 +22,10 @@ const haystackFor = (event: TRenderedEvent) => {
   return haystack;
 };
 
-/** True for anything a reader would call "a tool call", including the items that carry one. */
-const isToolCallEvent = (event: TRenderedEvent) => {
-  const type = event.rawEvent.type;
-  const itemType = (event.rawEvent as { item?: { type?: string } }).item?.type;
-
-  return (
-    type === 'response.function_call_arguments.delta' ||
-    type === 'response.function_call_arguments.done' ||
-    itemType === 'function_call' ||
-    itemType === 'function_call_output'
-  );
-};
-
 const emptyCounts = (): Record<EEventCategory, number> => {
   const counts = {} as Record<EEventCategory, number>;
-  for (const category of EVENT_CATEGORIES) {
-    counts[category.id] = 0;
+  for (const category of Object.values(EEventCategory)) {
+    counts[category] = 0;
   }
   return counts;
 };

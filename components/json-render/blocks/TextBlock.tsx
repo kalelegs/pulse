@@ -1,14 +1,13 @@
 'use client';
 
-import type { BaseComponentProps } from '@json-render/react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import type { TBlockProps } from '@/components/json-render/blocks';
+import type { TBlockComponent } from '@/lib/json-render/blocks';
 
 const SIZES = { sm: 'text-xs', md: 'text-sm', lg: 'text-base' } as const;
 const ALIGN = { start: 'text-left', center: 'text-center', end: 'text-right' } as const;
 
-export const TextBlock = ({ props, loading }: BaseComponentProps<TBlockProps<'TextBlock'>>) => {
+export const TextBlock: TBlockComponent<'TextBlock'> = ({ props, loading }) => {
   if (loading) {
     return (
       <div className="space-y-1.5">

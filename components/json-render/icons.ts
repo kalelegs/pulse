@@ -56,7 +56,7 @@ import {
   RiWindyLine,
   type RemixiconComponentType,
 } from '@remixicon/react';
-import type { TIconName } from '@/components/json-render/blocks/iconNames';
+import type { TIconName } from '@/lib/json-render/iconNames';
 
 /**
  * Curated remixicon lookup. Explicit imports only — never dynamically import the

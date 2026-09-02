@@ -1,9 +1,8 @@
 'use client';
 
-import type { BaseComponentProps } from '@json-render/react';
 import { Skeleton } from '@/components/ui/skeleton';
 import BlockIcon from '@/components/json-render/BlockIcon';
-import type { TBlockProps } from '@/components/json-render/blocks';
+import type { TBlockComponent } from '@/lib/json-render/blocks';
 
 /**
  * Label and value are both agent-supplied and unbounded, so neither side may be
@@ -13,10 +12,7 @@ import type { TBlockProps } from '@/components/json-render/blocks';
  * first (`flex-1`) because the value is the payload. `title` keeps the full
  * string reachable when either end is clipped.
  */
-export const KeyValueBlock = ({
-  props,
-  loading,
-}: BaseComponentProps<TBlockProps<'KeyValueBlock'>>) => {
+export const KeyValueBlock: TBlockComponent<'KeyValueBlock'> = ({ props, loading }) => {
   if (loading) {
     return (
       <div className="flex items-center justify-between gap-4 py-1">

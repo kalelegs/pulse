@@ -1,10 +1,9 @@
 'use client';
 
-import type { BaseComponentProps } from '@json-render/react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import BlockIcon from '@/components/json-render/BlockIcon';
-import type { TBlockProps } from '@/components/json-render/blocks';
+import type { TBlockComponent } from '@/lib/json-render/blocks';
 
 const TRENDS = {
   up: 'text-emerald-500',
@@ -12,7 +11,7 @@ const TRENDS = {
   flat: 'text-muted-foreground',
 } as const;
 
-export const MetricBlock = ({ props, loading }: BaseComponentProps<TBlockProps<'MetricBlock'>>) => {
+export const MetricBlock: TBlockComponent<'MetricBlock'> = ({ props, loading }) => {
   const isLarge = props.size !== 'md';
 
   if (loading) {

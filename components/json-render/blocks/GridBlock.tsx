@@ -1,8 +1,7 @@
 'use client';
 
-import type { BaseComponentProps } from '@json-render/react';
 import { cn } from '@/lib/utils';
-import type { TBlockProps } from '@/components/json-render/blocks';
+import type { TBlockComponent } from '@/lib/json-render/blocks';
 
 /** Explicit classes so Tailwind can statically extract them. */
 const COLUMNS = {
@@ -27,7 +26,7 @@ const clampColumns = (columns: number | null): keyof typeof COLUMNS =>
     ? (Math.min(6, Math.max(1, Math.round(columns))) as keyof typeof COLUMNS)
     : 2;
 
-export const GridBlock = ({ props, children }: BaseComponentProps<TBlockProps<'GridBlock'>>) => (
+export const GridBlock: TBlockComponent<'GridBlock'> = ({ props, children }) => (
   <div className={cn('grid', COLUMNS[clampColumns(props.columns)], GAP[props.gap ?? 'md'])}>
     {children}
   </div>

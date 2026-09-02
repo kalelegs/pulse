@@ -4,14 +4,9 @@ import { memo } from 'react';
 import { RiInformationLine } from '@remixicon/react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { EEventKind } from '@/types';
 import { TDescribedHistoryItem } from './historyItems';
-import { TRenderTone } from './renderers/types';
-import { toneInputAudio, toneResponse, toneTool, toneUnknown } from './renderers/tones';
-
-const TONE_BY_ROLE: Record<string, TRenderTone> = {
-  user: toneInputAudio,
-  assistant: toneResponse,
-};
+import { TONE_BY_KIND, TONE_BY_ROLE, TONE_UNKNOWN } from './tones';
 
 type THistoryItemCardProps = {
   item: TDescribedHistoryItem;
@@ -26,7 +21,9 @@ type THistoryItemCardProps = {
  * compared against the transcript, so everything the SDK reports is on screen at once.
  */
 const HistoryItemCard = ({ item, index }: THistoryItemCardProps) => {
-  const tone = TONE_BY_ROLE[item.role] ?? (item.itemType === 'message' ? toneUnknown : toneTool);
+  const tone =
+    TONE_BY_ROLE[item.role] ??
+    (item.itemType === 'message' ? TONE_UNKNOWN : TONE_BY_KIND[EEventKind.Tool]);
 
   return (
     <article className={cn('shrink-0 rounded-xl border p-3 shadow-sm', tone.card)}>

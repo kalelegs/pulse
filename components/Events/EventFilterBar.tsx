@@ -4,7 +4,8 @@ import { MouseEvent } from 'react';
 import { RiFilter3Line } from '@remixicon/react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { EEventCategory, EVENT_CATEGORIES, TEventCategoryMeta } from './categories';
+import { EEventCategory } from '@/types';
+import { EVENT_CATEGORIES, TEventCategoryMeta } from './categoryMeta';
 
 const ALL_CATEGORY_IDS = EVENT_CATEGORIES.map((category) => category.id);
 

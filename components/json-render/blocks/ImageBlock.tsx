@@ -2,11 +2,10 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import type { BaseComponentProps } from '@json-render/react';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { TBlockProps } from '@/components/json-render/blocks';
+import type { TBlockComponent } from '@/lib/json-render/blocks';
 
-export const ImageBlock = ({ props, loading }: BaseComponentProps<TBlockProps<'ImageBlock'>>) => {
+export const ImageBlock: TBlockComponent<'ImageBlock'> = ({ props, loading }) => {
   const [failed, setFailed] = useState(false);
   const width = props.width ?? 640;
   const height = props.height ?? 360;

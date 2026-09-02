@@ -1,7 +1,7 @@
 import { block, buildSpec } from '@/lib/spec-builders/builder';
 import { followUpChips, forecastStrip, statsGrid } from '@/lib/spec-builders/weatherParts';
 import type { TJsonRenderSpec } from '@/lib/json-render/types';
-import type { TWeatherReport } from '@/lib/weather/types';
+import type { TWeatherReport } from '@/lib/weather';
 
 /** "California, United States" — whatever the geocoder actually gave us. */
 const regionPhrase = (report: TWeatherReport): string =>

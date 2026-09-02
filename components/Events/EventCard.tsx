@@ -1,16 +1,19 @@
 'use client';
 
 import { KeyboardEvent, memo } from 'react';
+import { RiArrowDownSLine, RiCheckLine, RiFileCopyLine } from '@remixicon/react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { getEventCategory } from '@/lib/events/categories';
 import { cn } from '@/lib/utils';
-import { EVENT_CATEGORIES, getEventCategory } from './categories';
-import { TRenderedEvent } from './renderers/types';
+import { TRenderedEvent } from '@/types';
+import { EVENT_CATEGORIES } from './categoryMeta';
+import { TONE_BY_KIND } from './tones';
 
 const CATEGORY_LABELS = new Map(EVENT_CATEGORIES.map((category) => [category.id, category.label]));
 
-type TLogCardProps = {
-  incomingEvent: TRenderedEvent;
+type TEventCardProps = {
+  event: TRenderedEvent;
   copied: boolean;
   expanded: boolean;
   /** Takes the event id so the handler stays stable and every other row can skip re-rendering. */
@@ -18,13 +21,14 @@ type TLogCardProps = {
   onCopy: (event: TRenderedEvent) => void;
 };
 
-const EventCard = ({ copied, expanded, onToggleExpand, onCopy, incomingEvent }: TLogCardProps) => {
-  const toggleExpand = () => onToggleExpand(incomingEvent.id);
-  const categoryLabel = CATEGORY_LABELS.get(getEventCategory(incomingEvent));
+const EventCard = ({ copied, expanded, onToggleExpand, onCopy, event }: TEventCardProps) => {
+  const toggleExpand = () => onToggleExpand(event.id);
+  const categoryLabel = CATEGORY_LABELS.get(getEventCategory(event));
+  const tone = TONE_BY_KIND[event.kind];
 
-  const onCardKeyDown = (event: KeyboardEvent<HTMLElement>) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
+  const onCardKeyDown = (keyEvent: KeyboardEvent<HTMLElement>) => {
+    if (keyEvent.key === 'Enter' || keyEvent.key === ' ') {
+      keyEvent.preventDefault();
       toggleExpand();
     }
   };
@@ -34,7 +38,7 @@ const EventCard = ({ copied, expanded, onToggleExpand, onCopy, incomingEvent }: 
       className={cn(
         'relative min-h-[88px] shrink-0 overflow-hidden rounded-xl border p-4 shadow-sm transition-colors',
         expanded ? 'bg-background/80' : 'hover:bg-background/80',
-        incomingEvent.tone.card,
+        tone.card,
       )}
     >
       <div
@@ -47,19 +51,19 @@ const EventCard = ({ copied, expanded, onToggleExpand, onCopy, incomingEvent }: 
       >
         <div className="min-w-0 flex-1 space-y-2">
           <div className="flex items-center gap-2.5">
-            <Badge variant="outline" className={cn('text-[11px]', incomingEvent.tone.badge)}>
-              {incomingEvent.kind}
+            <Badge variant="outline" className={cn('text-[11px]', tone.badge)}>
+              {event.kind}
             </Badge>
-            <span className="text-muted-foreground text-[11px]">{incomingEvent.timestamp}</span>
+            <span className="text-muted-foreground text-[11px]">{event.timestamp}</span>
           </div>
-          <p className="text-sm leading-tight font-medium">{incomingEvent.title}</p>
+          <p className="text-sm leading-tight font-medium">{event.title}</p>
           <p
             className={cn(
               'text-muted-foreground text-xs leading-relaxed',
               expanded ? 'line-clamp-none' : 'line-clamp-1',
             )}
           >
-            {incomingEvent.summary}
+            {event.summary}
           </p>
         </div>
         <div className="flex items-center gap-1">
@@ -69,47 +73,24 @@ const EventCard = ({ copied, expanded, onToggleExpand, onCopy, incomingEvent }: 
             size="icon-xs"
             aria-label={copied ? 'Copied event' : 'Copy event'}
             title={copied ? 'Copied' : 'Copy event JSON'}
-            onClick={(event) => {
-              event.stopPropagation();
-              onCopy(incomingEvent);
+            onClick={(clickEvent) => {
+              clickEvent.stopPropagation();
+              onCopy(event);
             }}
           >
             {copied ? (
-              <svg
-                viewBox="0 0 24 24"
-                className="size-3.5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M20 6 9 17l-5-5" />
-              </svg>
+              <RiCheckLine className="size-3.5" aria-hidden="true" />
             ) : (
-              <svg
-                viewBox="0 0 24 24"
-                className="size-3.5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <rect x="9" y="9" width="13" height="13" rx="2" />
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-              </svg>
+              <RiFileCopyLine className="size-3.5" aria-hidden="true" />
             )}
           </Button>
-          <svg
-            viewBox="0 0 24 24"
+          <RiArrowDownSLine
             className={cn(
               'text-muted-foreground size-3.5 transition-transform',
               expanded ? 'rotate-180' : '',
             )}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
             aria-hidden="true"
-          >
-            <path d="m6 9 6 6 6-6" />
-          </svg>
+          />
           <span className="text-muted-foreground text-[10px]">
             {expanded ? 'Collapse' : 'Expand'}
           </span>
@@ -117,14 +98,14 @@ const EventCard = ({ copied, expanded, onToggleExpand, onCopy, incomingEvent }: 
       </div>
       <div className="mt-3 flex items-center justify-between gap-2">
         <code className="text-muted-foreground truncate rounded bg-black/20 px-1.5 py-0.5 text-[10px]">
-          {incomingEvent.rawEvent.type}
+          {event.rawEvent.type}
         </code>
         <span className="text-muted-foreground shrink-0 text-[10px]">{categoryLabel}</span>
       </div>
       {expanded ? (
         <div className="mt-3 rounded-md border border-white/10 bg-black/20 p-2.5">
           <pre className="text-muted-foreground overflow-auto text-[11px] whitespace-pre-wrap">
-            {JSON.stringify(incomingEvent.rawEvent, null, 2)}
+            {JSON.stringify(event.rawEvent, null, 2)}
           </pre>
         </div>
       ) : null}

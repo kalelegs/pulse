@@ -29,75 +29,14 @@ const knownAssistantIds = (): Set<string> => {
  * Attaches a generative-UI spec to the assistant bubble the user reads as
  * *the answer*.
  *
- * ## Why this is not one line
- *
- * A tool call splits one assistant turn into two conversation items, and the
- * transport orders them like this — verified by replaying the repo's own
- * `events.log.json` through `createMessageExtractor`:
- *
- * 1. `response.output_audio_transcript.done` for the announcement item ("let me
- *    check that") — `assistantTurn` finalises it and clears `activeMessage`.
- * 2. `response.output_item.done` for the `function_call` item — where the agents
- *    SDK invokes `execute`.
- * 3. A fresh `response.created` once the tool output is submitted, and only then
- *    `response.output_item.added` for the answer bubble.
- *
- * So at `execute` time `activeMessage` is `undefined`, and
- * `attachSpecToMessage(spec)` with no id is a silent no-op — the store's no-id
- * path deliberately leaves `finalisedMessages` alone. Nor can the tool be handed
- * the right id: `ToolCallDetails.toolCall` is the *function_call* item, not the
- * message item, and the answer bubble does not exist yet — `execute` has to
- * return before the SDK submits the output that creates it.
- *
- * This function therefore returns immediately and finishes from a store
- * subscription: it claims the answer bubble as its target and attaches with an
- * explicit id.
- *
- * ## Which bubble it claims
- *
- * A new assistant bubble is not enough on its own. Step 2 happens *inside* a
- * response, and a response may legally emit another message item after its
- * `function_call` — a late "one moment…" would then be claimed as the answer.
- * The target must therefore be new **and** belong to a response that started
- * after `execute` ran, which is what `sessionEpoch`'s sibling `responseId`
- * records: the tool captures the response it was called from and waits for a
- * bubble from a different one. A transport that does not label its responses
- * leaves `responseId` `undefined`, and the claim falls back to "the next new
- * bubble".
- *
- * ## Why the subscription looks at `previous`
- *
- * A zustand subscriber runs on *every* `set`, not only on the ones it cares
- * about, so "is this bubble a valid target right now?" has to be asked at the
- * right moment as well as of the right bubble. `responseId` and `activeMessage`
- * are written by two different `set` calls, and the responses overlap on the
- * wire: `response.created(B)` can arrive before `response.done(A)`
- * (`lib/EventProcessor/responseTracker.tsx`). On that `setResponseId(B)`
- * notification the store still holds a bubble owned by **A**, which then passes
- * every check — new, assistant, and `responseId !== responseId-at-execute` —
- * and the card lands on the wrong bubble.
- *
- * The listener therefore compares `state` with `previous` and acts only on the
- * `setActiveMessage` that *opens* a bubble, the one notification where
- * `responseId` genuinely describes the bubble's owner. Skipping the
- * `setResponseId` notification costs nothing: the bubble it was about does not
- * exist yet, and its own `setActiveMessage` follows immediately after.
- *
- * ## When it attaches
- *
- * At step 3, on the `setActiveMessage` that opens the bubble — the earliest
- * moment the target exists, roughly one round trip after `execute` returns and
- * before the first transcript delta. The spec survives everything that happens
- * to the bubble afterwards: `appendContentToActiveMessage` and
- * `assistantTurn.finalise` both copy the active message, so the card is already
- * on screen while the answer is spoken and stays on the finalised transcript.
- * Nothing renders it as a skeleton — specs are built whole by typed TypeScript,
- * and `AssistantMessage` does not pass `loading` to the render surface.
- *
- * Ids seen at `execute` time are excluded, so the announcement bubble — active
- * or already finalised — is never the target. Concurrent tool calls each claim
- * the same answer bubble; a message holds one spec, so the last to resolve wins
- * and the overwrite is warned about.
+ * It cannot be `attachSpecToMessage(spec)`: a tool call splits the turn into an
+ * announcement bubble (already finalised when `execute` runs) and an answer
+ * bubble (not created until after `execute` returns), so at call time there is
+ * no active message to attach to. This returns immediately and finishes from a
+ * store subscription, claiming the first assistant bubble that is both unseen
+ * at `execute` time and from a later response than the one the tool ran in,
+ * then attaching with that bubble's explicit id. The full event ordering, the
+ * overlapping-responses race and the abandon rules are in `tools/README.md`.
  *
  * @param spec Fully built, already valid spec.
  */

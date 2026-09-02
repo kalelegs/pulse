@@ -1,103 +1,76 @@
 'use client';
 
+import { RiSettings3Line } from '@remixicon/react';
+import SettingRow, { TSettingOption } from '@/components/SettingRow';
 import { buttonVariants } from '@/components/ui/button';
 import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { useChatStore } from '@/hooks';
-import { Label } from '@/components/ui/label';
-import { RiSettings3Line } from '@remixicon/react';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { useEventLogStore } from '@/hooks';
+import { TEventsLogLevel } from '@/types';
 
+const LOG_LEVEL_OPTIONS: readonly TSettingOption<TEventsLogLevel>[] = [
+  { value: 'info', label: 'info' },
+  { value: 'verbose', label: 'verbose' },
+];
+
+const RENDER_TOOL_CALL_OPTIONS: readonly TSettingOption<'true' | 'false'>[] = [
+  { value: 'true', label: 'Yes' },
+  { value: 'false', label: 'No' },
+];
+
+/** The settings dialog: the two debug-panel switches that do not belong on the chip row. */
 const SettingsPanel = () => {
-  const renderToolCalls = useChatStore((state) => state.renderToolCalls);
-  const setRenderToolCalls = useChatStore((state) => state.setRenderToolCalls);
-  const eventsLogLevel = useChatStore((state) => state.eventsLogLevel);
-  const setEventsLogLevel = useChatStore((state) => state.setEventsLogLevel);
+  const renderToolCalls = useEventLogStore((state) => state.renderToolCalls);
+  const setRenderToolCalls = useEventLogStore((state) => state.setRenderToolCalls);
+  const eventsLogLevel = useEventLogStore((state) => state.eventsLogLevel);
+  const setEventsLogLevel = useEventLogStore((state) => state.setEventsLogLevel);
 
   return (
-    <AlertDialog>
-      <AlertDialogTrigger
+    <Dialog>
+      <DialogTrigger
         aria-label="Open settings"
         className={buttonVariants({ variant: 'outline', size: 'icon' })}
       >
         <RiSettings3Line className="size-4" />
-      </AlertDialogTrigger>
-      <AlertDialogContent className="max-w-md">
-        <AlertDialogHeader className="place-items-start text-left">
-          <AlertDialogTitle>Settings</AlertDialogTitle>
-          <AlertDialogDescription>
-            Configure UI behavior for this realtime experience.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
+      </DialogTrigger>
+      <DialogContent className="max-w-md">
+        <DialogHeader className="place-items-start text-left">
+          <DialogTitle>Settings</DialogTitle>
+          <DialogDescription>Configure UI behavior for this realtime experience.</DialogDescription>
+        </DialogHeader>
 
         <div className="space-y-4">
-          <div className="space-y-1">
-            <p className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-              Recording
-            </p>
-            <Label className="text-xs">Events log level</Label>
-            <Select
-              value={eventsLogLevel}
-              onValueChange={(value) => setEventsLogLevel(value === 'verbose' ? 'verbose' : 'info')}
-            >
-              <SelectTrigger className="w-36">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="info">info</SelectItem>
-                <SelectItem value="verbose">verbose</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-muted-foreground text-xs">
-              Decides which transport events are <strong>captured</strong> into the panel.
-              <code> info</code> keeps only structural events, so anything it skips is gone for good
-              — it is never recorded.
-            </p>
-          </div>
-
-          <div className="space-y-1">
-            <p className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-              Display
-            </p>
-            <Label className="text-xs">Render tool calls</Label>
-            <Select
-              value={renderToolCalls ? 'true' : 'false'}
-              onValueChange={(value) => setRenderToolCalls(value === 'true')}
-            >
-              <SelectTrigger className="w-36">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="true">Yes</SelectItem>
-                <SelectItem value="false">No</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-muted-foreground text-xs">
-              Hides tool-call events from the list without discarding them. Per-category filtering
-              lives on the chips in the Events panel itself.
-            </p>
-          </div>
+          <SettingRow
+            section="Recording"
+            label="Events log level"
+            value={eventsLogLevel}
+            options={LOG_LEVEL_OPTIONS}
+            onChange={setEventsLogLevel}
+            help={
+              <>
+                Decides which transport events are <strong>captured</strong> into the panel.
+                <code> info</code> keeps only structural events, so anything it skips is gone for
+                good — it is never recorded.
+              </>
+            }
+          />
+          <SettingRow
+            section="Display"
+            label="Render tool calls"
+            value={renderToolCalls ? 'true' : 'false'}
+            options={RENDER_TOOL_CALL_OPTIONS}
+            onChange={(value) => setRenderToolCalls(value === 'true')}
+            help="Hides every tool-call event from the list without discarding it: argument deltas, completed arguments, and the function_call / function_call_output items. Wider than the Tools chip, which only covers completed arguments."
+          />
         </div>
-
-        <AlertDialogFooter>
-          <AlertDialogCancel>Close</AlertDialogCancel>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+      </DialogContent>
+    </Dialog>
   );
 };
 

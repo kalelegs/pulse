@@ -1,11 +1,10 @@
 'use client';
 
-import type { BaseComponentProps } from '@json-render/react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import type { TBlockProps } from '@/components/json-render/blocks';
+import type { TBlockComponent } from '@/lib/json-render/blocks';
 
-export const TextBubble = ({ props, loading }: BaseComponentProps<TBlockProps<'TextBubble'>>) => {
+export const TextBubble: TBlockComponent<'TextBubble'> = ({ props, loading }) => {
   if (loading) {
     return (
       <div className={cn('flex', props.align === 'end' ? 'justify-end' : 'justify-start')}>
@@ -18,7 +17,7 @@ export const TextBubble = ({ props, loading }: BaseComponentProps<TBlockProps<'T
   }
 
   return (
-    <div className={cn('flex', props.align === 'end' ? 'items-end' : 'items-start')}>
+    <div className={cn('flex', props.align === 'end' ? 'justify-end' : 'justify-start')}>
       <div className="max-w-[80%] space-y-1">
         {props.speaker ? <p className="text-muted-foreground text-xs">{props.speaker}</p> : null}
         <div

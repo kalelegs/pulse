@@ -1,8 +1,7 @@
 'use client';
 
-import type { BaseComponentProps } from '@json-render/react';
 import { cn } from '@/lib/utils';
-import type { TBlockProps } from '@/components/json-render/blocks';
+import type { TBlockComponent } from '@/lib/json-render/blocks';
 
 const GAP = { none: 'gap-0', sm: 'gap-2', md: 'gap-3', lg: 'gap-6' } as const;
 const ALIGN = {
@@ -18,7 +17,7 @@ const JUSTIFY = {
   between: 'justify-between',
 } as const;
 
-export const StackBlock = ({ props, children }: BaseComponentProps<TBlockProps<'StackBlock'>>) => (
+export const StackBlock: TBlockComponent<'StackBlock'> = ({ props, children }) => (
   <div
     className={cn(
       'flex',

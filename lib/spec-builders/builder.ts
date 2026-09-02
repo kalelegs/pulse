@@ -1,6 +1,6 @@
 import type { ActionBinding, UIElement, VisibilityCondition } from '@json-render/core';
 import type { z } from 'zod';
-import { blockActions, type TBlockName, type TBlockProps } from '@/components/json-render/blocks';
+import { blockActions, type TBlockName, type TBlockProps } from '@/lib/json-render/blocks';
 import type { TJsonRenderSpec } from '@/lib/json-render/types';
 
 /** A node in the readable, nested form used while authoring a spec. */

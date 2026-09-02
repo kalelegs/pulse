@@ -10,11 +10,12 @@ call.
 ```
 tools/
   index.ts             the registry — agents import `agentTools` from here
-  weather.tsx          get_weather_for_city  (typed experience)
-  renderUi.tsx         render_ui             (model-authored experience)
+  weather.ts           get_weather_for_city  (typed experience)
+  renderUi.ts          render_ui             (model-authored experience)
   attachSpec.ts        puts a spec on the assistant's reply bubble
   catalogReference.ts  compact block vocabulary for render_ui's description
   specSchema.ts        strict-mode-safe parameters for a model-authored spec
+  specChecks.ts        per-block props + action binding checks for that spec
 ```
 
 ## The contract: speak a summary, render a spec
@@ -48,7 +49,7 @@ before the SDK submits the output that creates it.
 subscription: it claims the answer bubble and attaches with an explicit id the
 moment that bubble opens — on the `setActiveMessage` behind
 `response.output_item.added`, roughly one round trip after `execute` returns and
-before the first transcript delta. Replaying `events.log.json` through
+before the first transcript delta. Replaying `docs/fixtures/events.log.json` through
 `createMessageExtractor` puts that at event 126, against 177 for the older
 attach-on-finalisation behaviour: the card is on screen for the whole spoken
 answer instead of appearing after it.
@@ -87,9 +88,9 @@ spec, so the last to resolve wins and the overwrite is logged with
 
 ## Adding a tool
 
-1. Create `tools/myTool.tsx`:
+1. Create `tools/myTool.ts` (tools contain no JSX, so `.ts`):
 
-   ```tsx
+   ```ts
    'use client';
 
    import { tool } from '@openai/agents';
@@ -114,7 +115,7 @@ spec, so the last to resolve wins and the overwrite is logged with
 2. Add one line to `tools/index.ts`. That is the whole registration — agents
    already consume `agentTools`.
 
-Keep the data layer out of the tool. `tools/weather.tsx` is ~55 lines because
+Keep the data layer out of the tool. `tools/weather.ts` is ~55 lines because
 fetching lives in `lib/weather/` behind `TWeatherProvider` and the card lives in
 `lib/spec-builders/weather.ts`; the tool only wires the three together.
 
@@ -131,9 +132,14 @@ not cover. Two things about it are load-bearing:
   rejects open-ended maps for the same reason, and models emit flat arrays more
   reliably than keyed objects.
 - **Everything is validated before it is shown.** `toJsonRenderSpec` parses the
-  JSON, checks key and child references, then runs
-  `jsonRenderCatalog.validate()`. An invalid spec never reaches the render
-  surface; the model gets a sentence describing what was wrong and can retry.
+  JSON, checks key and child references, runs `jsonRenderCatalog.validate()`
+  for the element envelope, then (`tools/specChecks.ts`, reading `lib/json-render/blocks`) runs each block's own
+  Zod props schema over its `props` and checks every `on.<event>` binding names
+  a `blockActions` action with the params it declares. The catalog check alone
+  is not enough — it types `props` loosely, so a `TableBlock.columns` of
+  `"Day,High"` would pass it and throw on screen after the model had been told
+  the panel was up. An invalid spec never reaches the render surface; the model
+  gets `key.path: message` lines describing what was wrong and can retry.
 
 ## Instruction budget
 

@@ -19,17 +19,19 @@ import { SuggestionChip } from '@/components/json-render/blocks/SuggestionChip';
 import { TableBlock } from '@/components/json-render/blocks/TableBlock';
 import { TextBlock } from '@/components/json-render/blocks/TextBlock';
 import { TextBubble } from '@/components/json-render/blocks/TextBubble';
-import type { TBlockComponents } from '@/components/json-render/blocks';
+import type { TBlockComponents } from '@/lib/json-render/blocks';
 
 /**
- * The client-side half of the block barrel: block name -> React component.
+ * The React half of the block vocabulary: block name -> React component.
  *
- * Kept separate from `./index.ts` purely because of the server/client boundary —
- * the catalog must stay React-free. The `TBlockComponents` annotation keeps the
- * two halves honest: a name present in `blockDefinitions` but missing here (or
- * vice versa), or a component demanding a prop its definition does not declare,
- * fails type-checking. See the `TBlockComponents` docblock in `./index.ts` for
- * the one case it cannot see — a component that under-declares its props.
+ * Kept apart from `lib/json-render/blocks/index.ts` because of the
+ * server/client boundary — the catalog must stay React-free, and `lib/` never
+ * imports from `components/`. The `TBlockComponents` annotation keeps the two
+ * halves honest: a name present in `blockDefinitions` but missing here (or vice
+ * versa), or a component demanding a prop its definition does not declare,
+ * fails type-checking. See the `TBlockComponents` docblock in
+ * `lib/json-render/blocks/index.ts` for the one case it cannot see — a
+ * component that under-declares its props.
  */
 export const blockComponents: TBlockComponents = {
   BadgeBlock,

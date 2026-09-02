@@ -1,4 +1,4 @@
-import type { TIconName } from '@/components/json-render/blocks';
+import type { TIconName } from '@/lib/json-render/iconNames';
 import type { TWeatherCondition } from '@/lib/weather/types';
 
 /** One WMO code, its prose label and the catalog icons that depict it. */

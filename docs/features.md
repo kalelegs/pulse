@@ -76,11 +76,13 @@ flowchart LR
 - Uses [json-render](https://github.com/vercel-labs/json-render) to render UI from declarative JSON specs.
 - Enables agents to drive rich interfaces without manual component wiring per view.
 - Keeps rendering generic and composable through a shared registry and renderer provider pattern.
-- A vocabulary of 19 domain-neutral blocks (`components/json-render/blocks/`) covers layout, text,
-  metrics, media and interaction. Domain UI is a _composition_ of those blocks, never a new component:
-  the weather card is built entirely from `CardBlock`, `MetricBlock`, `KeyValueBlock` and friends.
-- `lib/json-render/catalog.ts` is the React-free contract shared with the model — `prompt()`,
-  `validate()` and `zodSchema()` are importable from tool code without dragging the component tree along.
+- A vocabulary of domain-neutral blocks (definitions in `lib/json-render/blocks/`, components in
+  `components/json-render/blocks/`; `/showcase` renders every one and shows the live count) covers
+  layout, text, metrics, media and interaction. Domain UI
+  is a _composition_ of those blocks, never a new component: the weather card is built entirely from
+  `CardBlock`, `HeadingBlock`, `MetricBlock`, `GridBlock`, `CarouselBlock` and friends.
+- `lib/json-render/catalog.ts` is the React-free contract shared with the model — `validate()` and
+  the block vocabulary are importable from tool code without dragging the component tree along.
 
 ## Generative UI from Tools
 
@@ -99,9 +101,10 @@ For a realtime **voice** agent this is the right trade:
 - **Unhallucinable.** The model cannot invent a broken layout mid-sentence.
 
 **`render_ui` — the escape hatch.** For open-ended requests the typed builders do not cover, the
-agent emits its own spec as tool arguments. It is validated with `jsonRenderCatalog.validate()`
-before anything is rendered; a bad spec comes back to the model as a description of what was wrong
-rather than reaching the screen. This is what makes the block registry genuinely usable _by_ agents,
+agent emits its own spec as tool arguments. Before anything is rendered it passes three checks —
+`jsonRenderCatalog.validate()` for the element envelope, each block's own Zod props schema for its
+`props`, and the `blockActions` vocabulary for every `on` binding — so a bad spec comes back to the
+model as `key.path: message` lines describing what was wrong rather than reaching the screen. This is what makes the block registry genuinely usable _by_ agents,
 rather than only usable by the app on their behalf.
 
 **Speech and screen say different things.** Every tool returns prose for the ear and a spec for the
@@ -110,7 +113,7 @@ returned summary carries the headline and an explicit instruction not to narrate
 
 **The screen is an input surface too.** Blocks bind catalog actions (`suggest`, `select`) on the
 element and `JsonRenderSurface` forwards every fired action to `onAction`. Tapping a follow-up chip
-is a full round trip: `components/Chat/specActions.tsx` sends the chip's text into the live session
+is a full round trip: `components/Chat/specActions.ts` sends the chip's text into the live session
 as a user turn via `useSession`'s `sendMessage`, and — only once that send has succeeded — echoes it
 into the transcript as a user bubble, because an injected conversation item is deliberately not
 rendered by the message extractor and the reply would otherwise appear with nothing prompting it.

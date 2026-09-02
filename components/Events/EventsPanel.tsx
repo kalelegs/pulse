@@ -15,7 +15,7 @@ const VIEWS: readonly { id: EDebugView; label: string; hint: string }[] = [
   {
     id: EDebugView.Events,
     label: 'Events',
-    hint: 'Every transport event, as recorded by lib/EventProcessor.',
+    hint: 'Every transport event, as recorded by lib/events/logTransportEvent.',
   },
   {
     id: EDebugView.History,

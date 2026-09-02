@@ -1,4 +1,4 @@
-import type { TIconName } from '@/components/json-render/blocks';
+import type { TIconName } from '@/lib/json-render/iconNames';
 
 /**
  * Temperature scale a report is requested in. The app is US-facing, so
@@ -26,8 +26,11 @@ export type TWeatherLocation = {
   country: string | null;
   latitude: number;
   longitude: number;
-  /** IANA timezone the forecast days are expressed in. */
-  timezone: string;
+  /**
+   * IANA timezone the forecast days are expressed in — "America/Los_Angeles".
+   * Null when neither the geocoder nor the forecast provider reported one.
+   */
+  timezone: string | null;
   /**
    * Other places that matched the same query, formatted for display.
    * Non-empty means the query was ambiguous and the first match was assumed.

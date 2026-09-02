@@ -15,17 +15,10 @@ import type { Spec } from '@json-render/react';
  * ```
  *
  * This module is type-only and free of React and of `'use client'`, so it can be
- * imported from anywhere — stores, server code, tool definitions.
+ * imported from anywhere — stores, server code, tool definitions. Block-level
+ * types (`TBlockName`, `TBlockProps`, …) live in `lib/json-render/blocks`.
  */
 export type TJsonRenderSpec = Spec;
-
-export type {
-  TBlockComponents,
-  TBlockDefinition,
-  TBlockName,
-  TBlockProps,
-  TIconName,
-} from '@/components/json-render/blocks';
 
 /**
  * Payload handed to `JsonRenderSurface`'s `onAction` when a block fires an

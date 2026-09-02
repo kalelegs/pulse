@@ -1,10 +1,9 @@
 'use client';
 
-import type { BaseComponentProps } from '@json-render/react';
 import { Skeleton } from '@/components/ui/skeleton';
 import BlockIcon from '@/components/json-render/BlockIcon';
-import type { TBlockProps } from '@/components/json-render/blocks';
-import { isSafeHttpUrl } from '@/components/json-render/blocks/safeUrl';
+import type { TBlockComponent } from '@/lib/json-render/blocks';
+import { isSafeHttpUrl } from '@/lib/json-render/blocks/safeUrl';
 
 /**
  * The protocol guard lives here rather than only in the Zod schema because
@@ -13,7 +12,7 @@ import { isSafeHttpUrl } from '@/components/json-render/blocks/safeUrl';
  * degrades to plain, non-interactive text: the label still reads, but there is
  * nothing to click.
  */
-export const LinkBlock = ({ props, loading }: BaseComponentProps<TBlockProps<'LinkBlock'>>) => {
+export const LinkBlock: TBlockComponent<'LinkBlock'> = ({ props, loading }) => {
   const content = (
     <>
       {props.text}

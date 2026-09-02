@@ -9,4 +9,4 @@ yarn.lock
 pnpm-lock.yaml
 
 # Captured session dump (generated data, not source)
-events.log.json
+docs/fixtures/events.log.json

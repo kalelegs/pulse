@@ -1,10 +1,9 @@
 'use client';
 
-import type { BaseComponentProps } from '@json-render/react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import BlockIcon from '@/components/json-render/BlockIcon';
-import type { TBlockProps } from '@/components/json-render/blocks';
+import type { TBlockComponent } from '@/lib/json-render/blocks';
 
 const SIZES = {
   '1': 'text-xl font-semibold',
@@ -12,10 +11,7 @@ const SIZES = {
   '3': 'text-sm font-medium',
 } as const;
 
-export const HeadingBlock = ({
-  props,
-  loading,
-}: BaseComponentProps<TBlockProps<'HeadingBlock'>>) => {
+export const HeadingBlock: TBlockComponent<'HeadingBlock'> = ({ props, loading }) => {
   if (loading) {
     return <Skeleton className="h-5 w-40" />;
   }

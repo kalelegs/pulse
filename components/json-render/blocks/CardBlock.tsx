@@ -1,10 +1,9 @@
 'use client';
 
-import type { BaseComponentProps } from '@json-render/react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import BlockIcon from '@/components/json-render/BlockIcon';
-import type { TBlockProps } from '@/components/json-render/blocks';
+import type { TBlockComponent } from '@/lib/json-render/blocks';
 
 const TONES = {
   default: 'bg-card',
@@ -12,7 +11,7 @@ const TONES = {
   accent: 'bg-primary/10 border-primary/20',
 } as const;
 
-export const CardBlock = ({ props, children }: BaseComponentProps<TBlockProps<'CardBlock'>>) => {
+export const CardBlock: TBlockComponent<'CardBlock'> = ({ props, children }) => {
   const hasHeader = Boolean(props.title || props.description || props.icon);
 
   return (

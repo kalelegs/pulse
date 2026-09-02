@@ -5,13 +5,13 @@ import {
   temperatureSymbol,
   toCompassPoint,
   weekdayLabel,
-  windSpeedParam,
   windUnitFor,
 } from '@/lib/weather/format';
 import { geocodeCity } from '@/lib/weather/geocode';
 import {
   EWeatherErrorCode,
   type TForecastDay,
+  type TTemperatureUnit,
   type TWeatherLocation,
   type TWeatherProvider,
   type TWeatherQuery,
@@ -57,6 +57,9 @@ type TForecastPayload = {
   timezone?: string;
 };
 
+/** The `wind_speed_unit` query value Open-Meteo expects for a temperature scale. */
+const windSpeedParam = (unit: TTemperatureUnit): string => (unit === 'celsius' ? 'kmh' : 'mph');
+
 /** Builds the forecast request URL. Units are always explicit — never provider defaults. */
 const buildForecastUrl = (location: TWeatherLocation, query: TWeatherQuery): string => {
   const params = new URLSearchParams({
@@ -66,7 +69,6 @@ const buildForecastUrl = (location: TWeatherLocation, query: TWeatherQuery): str
     daily: DAILY_FIELDS,
     temperature_unit: query.unit,
     wind_speed_unit: windSpeedParam(query.unit),
-    precipitation_unit: query.unit === 'celsius' ? 'mm' : 'inch',
     timezone: 'auto',
     forecast_days: String(query.forecastDays ?? DEFAULT_FORECAST_DAYS),
   });
@@ -132,7 +134,11 @@ export const openMeteoProvider: TWeatherProvider = {
     return {
       ok: true,
       report: {
-        location: { ...geocoded.location, timezone: forecast.data.timezone ?? 'auto' },
+        location: {
+          ...geocoded.location,
+          // The geocoder already knows the zone; the forecast echo is only a fallback.
+          timezone: geocoded.location.timezone ?? forecast.data.timezone ?? null,
+        },
         unit: query.unit,
         temperatureSymbol: temperatureSymbol(query.unit),
         windUnit: windUnitFor(query.unit),

@@ -1,12 +1,11 @@
 'use client';
 
-import type { BaseComponentProps } from '@json-render/react';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import type { TBlockProps } from '@/components/json-render/blocks';
+import type { TBlockComponent } from '@/lib/json-render/blocks';
 
-export const LabelBlock = ({ props, loading }: BaseComponentProps<TBlockProps<'LabelBlock'>>) => {
+export const LabelBlock: TBlockComponent<'LabelBlock'> = ({ props, loading }) => {
   if (loading) {
     return <Skeleton className="h-3.5 w-16" />;
   }

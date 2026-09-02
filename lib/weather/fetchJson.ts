@@ -7,13 +7,26 @@ const REQUEST_TIMEOUT_MS = 8_000;
 export type TFetchJsonResult<TPayload> =
   { ok: true; data: TPayload } | { ok: false; code: EWeatherErrorCode; message: string };
 
+const isAbort = (error: unknown): boolean =>
+  error instanceof DOMException && error.name === 'AbortError';
+
+const timeoutFailure = (label: string): TFetchJsonResult<never> => ({
+  ok: false,
+  code: EWeatherErrorCode.TIMEOUT,
+  message: `The ${label} service did not respond within ${REQUEST_TIMEOUT_MS / 1000} seconds.`,
+});
+
 /**
  * Fetches JSON with a hard timeout, mapping every failure mode onto an
  * `EWeatherErrorCode`.
  *
  * A realtime voice turn is blocked while a tool runs, so an upstream that hangs
- * would leave the assistant silent indefinitely. The abort budget is what keeps
+ * would leave the assistant silent indefinitely. The abort budget is what turns
  * a bad network into a spoken apology rather than dead air.
+ *
+ * Transport and parsing are caught separately: a 200 whose body is not JSON is
+ * the provider misbehaving (`MALFORMED`), not the network (`NETWORK`), and the
+ * spoken apology differs.
  *
  * @param url Fully qualified request URL.
  * @param label Human name of the upstream, used in the failure message.
@@ -24,10 +37,23 @@ export const fetchJson = async <TPayload>(
 ): Promise<TFetchJsonResult<TPayload>> => {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  let response: Response;
 
   try {
-    const response = await fetch(url, { signal: controller.signal });
+    response = await fetch(url, { signal: controller.signal });
+  } catch (error) {
+    clearTimeout(timeoutId);
 
+    return isAbort(error)
+      ? timeoutFailure(label)
+      : {
+          ok: false,
+          code: EWeatherErrorCode.NETWORK,
+          message: `Could not reach the ${label} service.`,
+        };
+  }
+
+  try {
     if (!response.ok) {
       return {
         ok: false,
@@ -38,19 +64,14 @@ export const fetchJson = async <TPayload>(
 
     return { ok: true, data: (await response.json()) as TPayload };
   } catch (error) {
-    if (error instanceof DOMException && error.name === 'AbortError') {
-      return {
-        ok: false,
-        code: EWeatherErrorCode.TIMEOUT,
-        message: `The ${label} service did not respond within ${REQUEST_TIMEOUT_MS / 1000} seconds.`,
-      };
-    }
-
-    return {
-      ok: false,
-      code: EWeatherErrorCode.NETWORK,
-      message: `Could not reach the ${label} service.`,
-    };
+    // The body can still time out mid-read; anything else is an unparseable body.
+    return isAbort(error)
+      ? timeoutFailure(label)
+      : {
+          ok: false,
+          code: EWeatherErrorCode.MALFORMED,
+          message: `The ${label} service returned a response that was not valid JSON.`,
+        };
   } finally {
     clearTimeout(timeoutId);
   }

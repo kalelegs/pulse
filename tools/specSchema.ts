@@ -3,6 +3,7 @@
 import { z } from 'zod';
 import { jsonRenderCatalog } from '@/lib/json-render/catalog';
 import type { TJsonRenderSpec } from '@/lib/json-render/types';
+import { bindingIssues, propIssues, type TDraftElement } from '@/tools/specChecks';
 
 /**
  * Tool parameters for a model-authored spec.
@@ -21,7 +22,11 @@ import type { TJsonRenderSpec } from '@/lib/json-render/types';
  * - `props` and `on` are **JSON strings**. Their shape genuinely varies per
  *   block — `TableBlock.rows` is a string matrix, `GridBlock.columns` a number —
  *   and no closed object schema can cover that. The strings are parsed and then
- *   checked against the real catalog schema, so nothing is trusted on the way in.
+ *   checked in three layers, so nothing is trusted on the way in:
+ *   `jsonRenderCatalog.validate()` for the element envelope, each block's own
+ *   Zod props schema for `props`, and `blockActions` for every `on` binding.
+ *   The catalog alone is not enough — its schema types `props` loosely, so a
+ *   `TableBlock` whose `columns` is a string would pass it and throw on screen.
  */
 export const uiSpecParameters = z.object({
   root: z.string().describe('Key of the outermost element. Usually a CardBlock or StackBlock.'),
@@ -70,12 +75,15 @@ const parseJsonObject = (value: string, label: string): Record<string, unknown> 
   return parsed as Record<string, unknown>;
 };
 
-/** Renders the first few Zod issues as one line each, so the model can act on them. */
-const describeIssues = (error: z.ZodError | undefined): string =>
-  (error?.issues ?? [])
-    .slice(0, 8)
-    .map((issue) => `${issue.path.join('.') || '(root)'}: ${issue.message}`)
-    .join('; ') || 'the spec did not match the block schemas';
+/** Renders the first few issues as one line each, so the model can act on them. */
+const describeIssues = (issues: string[]): string =>
+  issues.slice(0, 8).join('; ') || 'the spec did not match the block schemas';
+
+/** Catalog issues in the same `path: message` shape as the per-element checks. */
+const catalogIssues = (error: z.ZodError | undefined): string[] =>
+  (error?.issues ?? []).map(
+    (issue) => `${issue.path.map(String).join('.') || '(root)'}: ${issue.message}`,
+  );
 
 /**
  * Turns the flat array the model emitted into a validated `TJsonRenderSpec`.
@@ -83,13 +91,17 @@ const describeIssues = (error: z.ZodError | undefined): string =>
  * Every failure returns prose aimed at the model rather than throwing, because
  * the model's next move is to fix the spec and call the tool again.
  *
+ * `elements` is a null-prototype object and every lookup goes through
+ * `Object.hasOwn`: keys are model-chosen, and a key such as `"constructor"`
+ * would otherwise hit `Object.prototype` and read as a duplicate.
+ *
  * @param input Parsed `render_ui` arguments.
  */
 export const toJsonRenderSpec = (input: TUiSpecParameters): TSpecConversionResult => {
-  const elements: Record<string, unknown> = {};
+  const elements: Record<string, TDraftElement> = Object.create(null);
 
   for (const element of input.elements) {
-    if (elements[element.key]) {
+    if (Object.hasOwn(elements, element.key)) {
       return { ok: false, error: `Duplicate element key "${element.key}".` };
     }
 
@@ -105,12 +117,12 @@ export const toJsonRenderSpec = (input: TUiSpecParameters): TSpecConversionResul
     }
   }
 
-  if (!elements[input.root]) {
+  if (!Object.hasOwn(elements, input.root)) {
     return { ok: false, error: `Root key "${input.root}" is not one of the elements.` };
   }
 
   const missing = input.elements.flatMap((element) =>
-    element.children.filter((child) => !elements[child]),
+    element.children.filter((child) => !Object.hasOwn(elements, child)),
   );
 
   if (missing.length) {
@@ -121,7 +133,16 @@ export const toJsonRenderSpec = (input: TUiSpecParameters): TSpecConversionResul
   const validation = jsonRenderCatalog.validate(spec);
 
   if (!validation.success) {
-    return { ok: false, error: describeIssues(validation.error) };
+    return { ok: false, error: describeIssues(catalogIssues(validation.error)) };
+  }
+
+  const issues = Object.entries(elements).flatMap(([key, element]) => [
+    ...propIssues(key, element),
+    ...bindingIssues(key, element.on),
+  ]);
+
+  if (issues.length) {
+    return { ok: false, error: describeIssues(issues) };
   }
 
   return { ok: true, spec };

@@ -21,64 +21,68 @@ A spec is a flat, key-addressed element map:
 
 ## Layout
 
+Each block is split in two, and the halves live in different trees so the
+dependency direction stays components -> lib: nothing under `lib/` or `tools/`
+imports from `components/`.
+
 ```
-components/json-render/
+lib/json-render/                                 React-free, server-safe
   blocks/
-    <Name>.definition.ts   zod props + description + example  (React-free)
-    <Name>.tsx             the React component                ('use client')
-    index.ts               blockDefinitions barrel            (React-free)
-    components.ts          blockComponents barrel             ('use client')
+    <Name>.definition.ts   zod props + description + example
+    index.ts               the vocabulary barrel: blockDefinitions, TBlockName, …
     defineBlock.ts         definition helper + TBlockDefinition
     actions.ts             catalog action vocabulary
-    iconNames.ts           curated icon name tuple
+    safeUrl.ts             http(s)-only href guard (LinkBlock definition + component)
+  catalog.ts    jsonRenderCatalog                (imports only blocks/index.ts)
+  iconNames.ts  ICON_NAMES, TIconName, iconEnum
+  types.ts      TJsonRenderSpec, TJsonRenderAction (type-only)
+
+components/json-render/                          'use client'
+  blocks/
+    <Name>.tsx             the React component, typed TBlockComponent<'Name'>
+    components.ts          blockComponents registry, typed TBlockComponents
+  renderer.tsx             JsonRenderer: catalog + blockComponents
   icons.ts                 icon name -> remixicon component map
   BlockIcon.tsx            shared icon renderer
   JsonRenderSurface.tsx    the public render surface
   JsonRenderErrorBoundary.tsx
-
-lib/json-render/                                 no barrel: import a leaf
-  catalog.ts    jsonRenderCatalog                (React-free, server-safe)
-  registry.tsx  JsonRenderer                     ('use client')
-  types.ts      TJsonRenderSpec + block types    (type-only)
 ```
 
-## Why the catalog and the registry are separate
+## Why the catalog and the renderer are separate
 
-`lib/json-render/catalog.ts` is the contract shared with the model. Agent
-instructions call `jsonRenderCatalog.prompt()`, tool definitions call
-`jsonRenderCatalog.jsonSchema()`, and tool handlers call
-`jsonRenderCatalog.validate()`. None of that should drag `next/image`, shadcn or
-`'use client'` into a server bundle — so the catalog imports only
-`blocks/index.ts`, which in turn imports only `*.definition.ts` files.
+`lib/json-render/catalog.ts` exists so that `jsonRenderCatalog.validate()` and
+the block vocabulary stay importable from server code (`tools/specSchema.ts`
+validates model-authored specs with it). None of that should drag `next/image`,
+shadcn or `'use client'` into a server bundle — so the catalog imports only
+`lib/json-render/blocks/index.ts`, which imports only `*.definition.ts` files.
+`prompt()` and `jsonSchema()` are deliberately unused; `tools/README.md`
+explains why.
 
-That is why each block is two files. The `.definition.ts` half is pure zod and
-prose; the `.tsx` half is JSX. Import each from its own file — a `.tsx` never
-re-exports its definition, precisely so that server code cannot reach a
-definition through a `'use client'` module by accident:
+That is why each block is two files in two trees. The `.definition.ts` half
+under `lib/` is pure zod and prose; the `.tsx` half under `components/` is JSX.
+Import each from its own file — a `.tsx` never re-exports its definition,
+precisely so that server code cannot reach a definition through a
+`'use client'` module by accident:
 
 ```ts
-import { cardBlockDefinition } from '@/components/json-render/blocks/CardBlock.definition'; // server-safe
+import { cardBlockDefinition } from '@/lib/json-render/blocks/CardBlock.definition'; // server-safe
 import { CardBlock } from '@/components/json-render/blocks/CardBlock'; // client only
 ```
 
-`blocks/components.ts` is annotated `TBlockComponents`, an exhaustive mapped type
-over `keyof blockDefinitions` whose value type is derived from each block's own
-zod schema. That catches a block registered in one map and missing from the
-other, and a component that _demands_ a prop its definition does not declare.
-
-It does not catch the opposite. A component typed `BaseComponentProps<{}>`, or one
-ignoring `props`, assigns cleanly — `{ text: string }` is assignable to `{}` — so a
-block that quietly stopped reading a prop the catalog still advertises to the model
-type-checks fine while the LLM keeps emitting a value nothing renders. Keys and
-over-demanding props are enforced; consuming what you declare is still on review.
+Each component is annotated `TBlockComponent<'Name'>` and `blocks/components.ts`
+is annotated `TBlockComponents`, an exhaustive map over `keyof blockDefinitions`
+typed from each block's own zod schema. That catches a block registered in one
+map and missing from the other, and a component that _demands_ a prop its
+definition does not declare. It does not catch the opposite — a component that
+ignores `props` assigns cleanly — so consuming what you declare is on review.
 
 ## Adding a new block
 
-1. `components/json-render/blocks/MyBlock.definition.ts`
+1. `lib/json-render/blocks/MyBlock.definition.ts`
 
    ```ts
    import { z } from 'zod';
-   import { defineBlock } from '@/components/json-render/blocks/defineBlock';
+   import { defineBlock } from '@/lib/json-render/blocks/defineBlock';
 
    export const myBlockDefinition = defineBlock({
      props: z.object({ text: z.string(), tone: z.enum(['a', 'b']).nullable() }),
@@ -95,10 +99,9 @@ over-demanding props are enforced; consuming what you declare is still on review
 
    ```tsx
    'use client';
-   import type { BaseComponentProps } from '@json-render/react';
-   import type { TBlockProps } from '@/components/json-render/blocks';
+   import type { TBlockComponent } from '@/lib/json-render/blocks';
 
-   export const MyBlock = ({ props, loading }: BaseComponentProps<TBlockProps<'MyBlock'>>) => ...;
+   export const MyBlock: TBlockComponent<'MyBlock'> = ({ props, loading }) => ...;
    ```
 
    Honour `loading` with a `Skeleton` where it means something. Use `on('press')`
@@ -106,12 +109,12 @@ over-demanding props are enforced; consuming what you declare is still on review
    re-export the definition from here — that would let server code pull a
    `'use client'` module in with no compile error.
 
-3. Add one line to `blocks/index.ts` (`MyBlock: myBlockDefinition`) and one line
-   to `blocks/components.ts` (`MyBlock`).
+3. Add one line to `lib/json-render/blocks/index.ts` (`MyBlock: myBlockDefinition`)
+   and one line to `components/json-render/blocks/components.ts` (`MyBlock`).
 
-Nothing else changes — the catalog, prompt, registry, renderer and builder all
-pick it up. Add it to `lib/spec-builders/showcase.ts` so it stays visually
-covered.
+Nothing else changes — the catalog, `render_ui`'s vocabulary, the renderer and
+the builder all pick it up. Add it to `app/showcase/showcaseSections.ts` so it
+stays visually covered.
 
 ## Block vocabulary
 
@@ -164,21 +167,15 @@ import JsonRenderSurface from '@/components/json-render/JsonRenderSurface';
 />;
 ```
 
-```ts
-export type TJsonRenderSurfaceProps = {
-  spec: TJsonRenderSpec | null | undefined;
-  loading?: boolean;
-  onAction?: (actionName: string, params?: Record<string, unknown>) => void;
-  className?: string;
-};
-```
-
 Guarantees:
 
 - **Invalid in, nothing out.** The spec is checked with
   `jsonRenderCatalog.validate()`; a failure logs `console.warn` and renders
   `null` instead of throwing. While `loading` is true the spec is still
-  streaming, so validation is advisory and the partial tree still renders.
+  streaming, so validation is advisory and the partial tree still renders. The
+  catalog check covers the element _envelope_ only and types `props` loosely;
+  per-block prop schemas and action bindings are enforced upstream, in
+  `tools/specSchema.ts` for model-authored specs and by the typed builders.
 - **Unknown blocks are visible.** A hallucinated `type` renders a muted
   "Unsupported block: X" chip, never a blank hole.
 - **A bad spec cannot white-screen the app.** Everything renders inside
@@ -193,7 +190,9 @@ Guarantees:
 
 ## Building specs by hand
 
-`lib/spec-builders/` provides `block()`, `bind()` and `buildSpec()` for fixtures
-and demos. Props and action params are type-checked against the catalog, and
-element keys are generated for you. See `showcase.ts` (every block) and
-`weather.ts` (a domain card composed purely from generic blocks).
+`lib/spec-builders/` provides `block()`, `bind()` and `buildSpec()` — the
+primary path for shipping UI: a tool builds its card in TypeScript, so the spec
+is complete and schema-valid the moment the tool resolves. Props and action
+params are type-checked against the catalog and element keys are generated. See
+`lib/spec-builders/weather.ts` (a domain card from generic blocks) and
+`app/showcase/showcaseSpec.ts` (every block, for the visual smoke test).

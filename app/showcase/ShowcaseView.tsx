@@ -16,6 +16,8 @@ export type TWeatherCase = {
 export type TShowcaseViewProps = {
   weatherCases: TWeatherCase[];
   showcaseSpec: TJsonRenderSpec;
+  /** `Object.keys(blockDefinitions).length`, read on the server so the heading cannot drift. */
+  blockCount: number;
 };
 
 /**
@@ -25,7 +27,7 @@ export type TShowcaseViewProps = {
  * the only thing that has to live on the client is the `onAction` callback and
  * the state it writes, since functions cannot cross the server/client boundary.
  */
-const ShowcaseView = ({ weatherCases, showcaseSpec }: TShowcaseViewProps) => {
+const ShowcaseView = ({ weatherCases, showcaseSpec, blockCount }: TShowcaseViewProps) => {
   const [action, setAction] = useState<TShowcaseAction | null>(null);
   const [count, setCount] = useState(0);
 
@@ -69,7 +71,7 @@ const ShowcaseView = ({ weatherCases, showcaseSpec }: TShowcaseViewProps) => {
         </ShowcaseSection>
 
         <ShowcaseSection
-          title="All 19 blocks"
+          title={`All ${blockCount} blocks`}
           description="createShowcaseSpec() — the visual smoke test for the whole catalog."
         >
           <JsonRenderSurface className="max-w-2xl" onAction={handleAction} spec={showcaseSpec} />

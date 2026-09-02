@@ -12,18 +12,10 @@ type TUserMessageProps = {
  * A user turn. Rendered right aligned and tinted with the primary colour so it reads as "you"
  * against the neutral assistant cards.
  *
- * The bubble is created as soon as the user's audio buffer is committed, which is why it can be
- * empty: input transcription only starts once that buffer is committed, and then arrives a word at
- * a time. So there are three states, and `message.isPending` — not emptiness — is what separates
- * them: nothing yet ("Transcribing" plus dots), partial text (the words so far, dots still going),
- * and the resolved transcript (text alone). The dots are the same element throughout, so the
- * hand-off from the placeholder to the first word neither restarts the animation nor moves the
- * bubble.
- *
- * Deliberately **not** an `aria-live` region, unlike the assistant's streaming text. These are the
- * user's own words, read back to them a fragment at a time; a polite region would queue up seven
- * announcements of a sentence they just said. The `role="status"` on the indicator announces
- * "Transcribing your message" once, which is the part a screen-reader user does not already know.
+ * `message.isPending` — not emptiness — picks between its three states (placeholder plus dots,
+ * partial text plus dots, text alone); see `./README.md`, "User". Deliberately not an `aria-live`
+ * region: these are the user's own words, and `TypingIndicator`'s `role="status"` already announces
+ * once that transcription is happening.
  */
 const UserMessage = ({ message }: TUserMessageProps) => {
   const hasText = message.content.trim().length > 0;

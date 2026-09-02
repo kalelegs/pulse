@@ -1,5 +1,4 @@
-import { resolveCondition } from '@/lib/weather';
-import type { TForecastDay, TWeatherReport } from '@/lib/weather/types';
+import { resolveCondition, type TForecastDay, type TWeatherReport } from '@/lib/weather';
 
 /**
  * Fixed `TWeatherReport`s for the showcase route.

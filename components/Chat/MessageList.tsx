@@ -5,7 +5,7 @@ import { RiArrowDownLine, RiChat3Line } from '@remixicon/react';
 import AssistantMessage from './AssistantMessage';
 import UserMessage from './UserMessage';
 import type { TSpecActionHandler } from './specActions';
-import { useChatAutoScroll } from './useChatAutoScroll';
+import { useAutoScroll } from '@/hooks';
 import { Button } from '@/components/ui/button';
 import { useChatStore } from '@/hooks';
 import { TMessage } from '@/types/ChatStore';
@@ -53,12 +53,12 @@ type TMessageListProps = {
 
 /**
  * The chat transcript: every finalised message plus the assistant message that is still
- * streaming. Scrolling is delegated to the surrounding column (see `useChatAutoScroll`).
+ * streaming. Scrolling is delegated to the surrounding column (see `hooks/useAutoScroll`).
  */
 const MessageList = ({ onSpecAction }: TMessageListProps) => {
   const finalisedMessages = useChatStore((state) => state.finalisedMessages);
   const activeMessage = useChatStore((state) => state.activeMessage);
-  const { listRef, isPinned, scrollToBottom } = useChatAutoScroll();
+  const { listRef, isPinned, scrollToBottom } = useAutoScroll();
   const hasMessages = finalisedMessages.length > 0 || Boolean(activeMessage);
 
   return (

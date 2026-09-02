@@ -1,6 +1,5 @@
 'use client';
 
-import type { BaseComponentProps } from '@json-render/react';
 import {
   Table,
   TableBody,
@@ -11,9 +10,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { TBlockProps } from '@/components/json-render/blocks';
+import type { TBlockComponent } from '@/lib/json-render/blocks';
 
-export const TableBlock = ({ props, loading }: BaseComponentProps<TBlockProps<'TableBlock'>>) => {
+export const TableBlock: TBlockComponent<'TableBlock'> = ({ props, loading }) => {
   const columns = props.columns ?? [];
   const rows = props.rows ?? [];
 

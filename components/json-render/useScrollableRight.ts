@@ -12,8 +12,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
  * flag to show an edge affordance only while one is warranted — a permanently
  * applied fade would clip the last item of a strip that fits.
  *
- * Re-measures on scroll, on the scroller resizing, and on any child resizing
- * (children arrive one at a time while a spec streams).
+ * Re-measures on scroll, on the scroller resizing, and on any child resizing.
+ * Children arrive one at a time while a spec streams, so a `MutationObserver`
+ * on the child list re-measures and puts each newcomer under the
+ * `ResizeObserver` as it lands — observing the children present at mount would
+ * miss every later one.
  */
 export const useScrollableRight = <TElement extends HTMLElement>() => {
   const ref = useRef<TElement | null>(null);
@@ -39,17 +42,30 @@ export const useScrollableRight = <TElement extends HTMLElement>() => {
 
     measure();
 
-    const observer = new ResizeObserver(measure);
-    observer.observe(element);
+    const resizeObserver = new ResizeObserver(measure);
+    resizeObserver.observe(element);
 
-    for (const child of Array.from(element.children)) {
-      observer.observe(child);
-    }
+    const observeChildren = () => {
+      for (const child of Array.from(element.children)) {
+        resizeObserver.observe(child);
+      }
+    };
+
+    observeChildren();
+
+    // `observe` on an already-observed child is a no-op, so re-observing them all is
+    // cheaper than diffing; removed children are dropped by the observer itself.
+    const mutationObserver = new MutationObserver(() => {
+      observeChildren();
+      measure();
+    });
+    mutationObserver.observe(element, { childList: true });
 
     element.addEventListener('scroll', measure, { passive: true });
 
     return () => {
-      observer.disconnect();
+      resizeObserver.disconnect();
+      mutationObserver.disconnect();
       element.removeEventListener('scroll', measure);
     };
   }, [measure]);
