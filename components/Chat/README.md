@@ -27,8 +27,7 @@ RealtimeSession ──transport_event──▶ RealtimeExperience.onTransportEve
                                             components/json-render/JsonRenderSurface
 ```
 
-`RealtimeExperience` hands every transport event to both consumers. They share nothing: removing
-one does not affect the other.
+`RealtimeExperience` hands every transport event to both consumers; they share nothing.
 
 ## Message extraction
 
@@ -106,15 +105,13 @@ ways a slot can be left hanging, and what closes each:
 - **an empty `completed`** — a cough or a slammed door trips server VAD, the service transcribes
   silence and reports success with `transcript: ""`. A non-event leaves no trace: the slot is
   retracted rather than re-committed from the (also empty) accumulated content.
-- **transcription that never arrives** — it runs on the committed audio buffer, off to the side of
-  the response, so a healthy conversation does not guarantee it. The timeout resolves the slot to
-  the placeholder. Deltas deliberately do **not** clear it: a stream that produces three words and
-  then stops is as unfilled as one that never started, and the timeout is all that is left to notice.
-- **a disconnect mid-transcription** — `reset()` drops the timers, so anything still open is
-  resolved first or it would stream for the rest of the tab's life.
+- **transcription that never arrives** — it runs off to the side of the response, so a healthy
+  conversation does not guarantee it. The timeout resolves the slot to the placeholder. Deltas do
+  **not** clear it: three words then silence is as unfilled as nothing, and only the timeout notices.
+- **a disconnect mid-transcription** — `reset()` resolves everything still open before its timers go.
 
-`failed` keeps the placeholder rather than retracting, because there _was_ speech the service could
-not read and the assistant may well have replied to it.
+`failed` keeps the placeholder rather than retracting: there _was_ speech, and the assistant may
+well have replied to it.
 
 The bubble appears the moment the user starts talking — `speech_started` already carries the
 `item_id` the turn will become — but its _text_ cannot arrive before the end of the utterance:
